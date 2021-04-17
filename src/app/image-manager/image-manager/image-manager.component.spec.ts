@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ImageViewComponent } from './image-view.component';
+import { ImageManagerComponent } from './image-manager.component';
 
-describe('ImageViewComponent', () => {
-  let component: ImageViewComponent;
-  let fixture: ComponentFixture<ImageViewComponent>;
+describe('ImageManagerComponent', () => {
+  let component: ImageManagerComponent;
+  let fixture: ComponentFixture<ImageManagerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ImageViewComponent ]
+      declarations: [ ImageManagerComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ImageViewComponent);
+    fixture = TestBed.createComponent(ImageManagerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

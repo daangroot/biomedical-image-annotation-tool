@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ImageListComponent } from './image-list.component';
+import { ImageAnnotatorComponent } from './image-annotator.component';
 
-describe('ImageListComponent', () => {
-  let component: ImageListComponent;
-  let fixture: ComponentFixture<ImageListComponent>;
+describe('ImageAnnotatorComponent', () => {
+  let component: ImageAnnotatorComponent;
+  let fixture: ComponentFixture<ImageAnnotatorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ImageListComponent ]
+      declarations: [ ImageAnnotatorComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ImageListComponent);
+    fixture = TestBed.createComponent(ImageAnnotatorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

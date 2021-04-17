@@ -1,12 +1,16 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { ImageListComponent } from './image-list/image-list.component';
-import { ImageViewComponent } from './image-view/image-view.component';
 
 const routes: Routes = [
-  { path: '', component: ImageListComponent },
-  { path: 'images/:imageId', component: ImageViewComponent }
+  {
+    path: '',
+    loadChildren: () => import('./image-manager/image-manager.module').then(m => m.ImageManagerModule)
+  },
+  {
+    path: 'images/:imageId',
+    loadChildren: () => import('./image-annotator/image-annotator.module').then(m => m.ImageAnnotatorModule)
+  }
 ];
 
 @NgModule({
