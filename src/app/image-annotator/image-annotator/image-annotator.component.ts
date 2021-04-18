@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
+import * as OpenSeadragon from 'openseadragon';
 
 @Component({
   selector: 'app-image-annotator',
@@ -14,6 +15,12 @@ export class ImageAnnotatorComponent implements OnInit {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
     const imageId: string | null = routeParams.get('imageId');
     console.log(imageId);
+
+    let viewer = OpenSeadragon({
+      id: 'openseadragon-viewer',
+      prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
+      tileSources: 'https://openseadragon.github.io/example-images/duomo/duomo.dzi'
+    });
   }
 
 }
