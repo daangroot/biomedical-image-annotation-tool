@@ -8,7 +8,7 @@
     Failed to retrieve images from server!
   </div>
   <div class="list-group" *ngIf="isDataLoaded">
-    <button type="button" class="list-group-item list-group-item-action" *ngFor="let imageInfo of imageInfos">
+    <a href="/images/{{ imageInfo.id }}" class="list-group-item list-group-item-action" *ngFor="let imageInfo of imageInfos">
       <div class="image-info">
         <div>
           <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/dzi/dzi_files/7/0_0.png" width="128">
@@ -20,6 +20,6 @@
           <div>Size: {{ (imageInfo.size / 1048576) | number:'1.0-2' }} MB</div>
         </div>
       </div>
-    </button>
+    </a>
   </div>
 </div>
