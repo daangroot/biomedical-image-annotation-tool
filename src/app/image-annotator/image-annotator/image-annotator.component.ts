@@ -17,7 +17,7 @@ export class ImageAnnotatorComponent implements OnInit {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
     const imageId: string | null = routeParams.get('imageId');
 
-    let viewer = OpenSeadragon({
+    const viewer: OpenSeadragon.Viewer = OpenSeadragon({
       id: 'openseadragon-viewer',
       prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
       tileSources: `${environment.apiUrl}/api/images/${imageId}/dzi/dzi.dzi`
