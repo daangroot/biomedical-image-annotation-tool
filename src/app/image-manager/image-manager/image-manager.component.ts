@@ -9,7 +9,5 @@ export class ImageManagerComponent implements OnInit {
 
   constructor() { }
 
-  ngOnInit(): void {
-  }
-
+  ngOnInit() { }
 }

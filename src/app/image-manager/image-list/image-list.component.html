@@ -1,0 +1,25 @@
+<div id="image-info-list">
+  <h4>Uploaded images</h4>
+  <div class="spinner-border text-primary" role="status" *ngIf="isLoading"></div>
+  <div class="alert alert-primary" role="alert" *ngIf="imageInfos.length === 0 && !isLoading && isDataLoaded">
+    No images found.
+  </div>
+  <div class="alert alert-danger" role="alert" *ngIf="!isLoading && !isDataLoaded">
+    Failed to retrieve images from server!
+  </div>
+  <div class="list-group" *ngIf="isDataLoaded">
+    <button type="button" class="list-group-item list-group-item-action" *ngFor="let imageInfo of imageInfos">
+      <div class="image-info">
+        <div>
+          <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/dzi/dzi_files/7/0_0.png" width="128">
+        </div>
+        <div>
+          <div>File: {{ imageInfo.originalName }}</div>
+          <div>MIME type: {{ imageInfo.mimeType }}</div>
+          <div>Resolution: {{ imageInfo.width }} x {{ imageInfo.height }}</div>
+          <div>Size: {{ (imageInfo.size / 1048576) | number:'1.0-2' }} MB</div>
+        </div>
+      </div>
+    </button>
+  </div>
+</div>

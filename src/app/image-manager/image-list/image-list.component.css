@@ -1,0 +1,11 @@
+.image-info {
+    display: flex;
+}
+
+.image-info > div:first-child {
+    margin-right: 1.25em;
+}
+
+#image-info-list {
+    margin-top: 2.5em;
+}
