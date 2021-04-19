@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import * as OpenSeadragon from 'openseadragon';
 
+import { environment } from '../../../environments/environment';
+
 @Component({
   selector: 'app-image-annotator',
   templateUrl: './image-annotator.component.html',
@@ -14,12 +16,11 @@ export class ImageAnnotatorComponent implements OnInit {
   ngOnInit(): void {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
     const imageId: string | null = routeParams.get('imageId');
-    console.log(imageId);
 
     let viewer = OpenSeadragon({
       id: 'openseadragon-viewer',
       prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
-      tileSources: 'https://openseadragon.github.io/example-images/duomo/duomo.dzi'
+      tileSources: `${environment.apiUrl}/api/images/${imageId}/dzi/dzi.dzi`
     });
   }
 
