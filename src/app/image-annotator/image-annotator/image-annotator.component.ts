@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
+
 import * as OpenSeadragon from 'openseadragon';
+import * as Annotorious from '@recogito/annotorious-openseadragon';
+//import '@recogito/annotorious-openseadragon/dist/annotorious.min.css';
 
 import { environment } from '../../../environments/environment';
 
@@ -21,6 +24,10 @@ export class ImageAnnotatorComponent implements OnInit {
       id: 'openseadragon-viewer',
       prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
       tileSources: `${environment.apiUrl}/api/images/${imageId}/dzi/dzi.dzi`
+    });
+
+    const anno = Annotorious(viewer, {
+      disableEditor: false
     });
   }
 
