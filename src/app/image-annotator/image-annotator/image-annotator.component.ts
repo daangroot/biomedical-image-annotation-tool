@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-
 import * as OpenSeadragon from 'openseadragon';
 import * as Annotorious from '@recogito/annotorious-openseadragon';
-//import '@recogito/annotorious-openseadragon/dist/annotorious.min.css';
 
 import { environment } from '../../../environments/environment';
 
@@ -26,9 +24,7 @@ export class ImageAnnotatorComponent implements OnInit {
       tileSources: `${environment.apiUrl}/api/images/${imageId}/dzi/dzi.dzi`
     });
 
-    const anno = Annotorious(viewer, {
-      disableEditor: false
-    });
+    const anno = Annotorious(viewer, { });
+    anno.setDrawingTool('polygon');
   }
-
 }
