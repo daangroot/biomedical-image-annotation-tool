@@ -15,7 +15,7 @@ export class ImageService {
     return this.http.get<ImageInfo[]>(this.imagesDataUrl);
   }
 
-  addImage(file: File) {
+  addImage(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('image', file);
 
@@ -25,5 +25,9 @@ export class ImageService {
     };
 
     return this.http.post(this.imagesDataUrl, formData, options);
+  }
+
+  deleteImage(id: string): Observable<any> {
+    return this.http.delete(`${this.imagesDataUrl}/${id}`);
   }
 }

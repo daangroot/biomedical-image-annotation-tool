@@ -19,7 +19,12 @@
           <div>Resolution: {{ imageInfo.width }} x {{ imageInfo.height }}</div>
           <div>Size: {{ (imageInfo.size / 1048576) | number:'1.0-2' }} MB</div>
         </div>
+        <div>
+          <button type="button" class="btn btn-primary" (click)="deleteImage($event, imageInfo.id)" *ngIf="deletedImageId !== imageInfo.id">Delete</button>
+          <div class="spinner-border text-primary" role="status" *ngIf="deletedImageId === imageInfo.id"></div>
+        </div>
       </div>
     </a>
   </div>
 </div>
+

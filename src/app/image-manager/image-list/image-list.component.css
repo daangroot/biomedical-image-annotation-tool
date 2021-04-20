@@ -2,7 +2,7 @@
     display: flex;
 }
 
-.image-info > div:first-child {
+.image-info > div {
     margin-right: 1.25em;
 }
 

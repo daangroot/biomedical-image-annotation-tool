@@ -13,6 +13,7 @@ export class ImageListComponent implements OnInit {
   imageInfos: ImageInfo[] = [];
   isLoading: boolean = false;
   isDataLoaded: boolean = true;
+  deletedImageId: string | null = null;
 
   constructor(private imageService: ImageService) { }
 
@@ -32,6 +33,21 @@ export class ImageListComponent implements OnInit {
           this.isDataLoaded = true;
         },
         () => this.isLoading = false
+      )
+  }
+
+  deleteImage(event: MouseEvent, id: string): void {
+    event.preventDefault();
+
+    this.deletedImageId = id;
+
+    this.imageService.deleteImage(id)
+      .subscribe(
+        next => window.location.reload(),
+        error => {
+          this.deletedImageId = null;
+          window.alert("Failed to delete image!");
+        }
       )
   }
 }
