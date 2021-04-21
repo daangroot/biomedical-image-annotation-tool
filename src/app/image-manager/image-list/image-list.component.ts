@@ -18,10 +18,10 @@ export class ImageListComponent implements OnInit {
   constructor(private imageService: ImageService) { }
 
   ngOnInit(): void {
-    this.getAllImageData();
+    this.getAllImageInfos();
   }
 
-  getAllImageData(): void {
+  getAllImageInfos(): void {
     this.isLoading = true;
     this.isDataLoaded = false;
 
@@ -43,7 +43,7 @@ export class ImageListComponent implements OnInit {
 
     this.imageService.deleteImage(id)
       .subscribe(
-        next => this.getAllImageData(),
+        next => this.getAllImageInfos(),
         error => {
           this.deletedImageId = null;
           window.alert("Failed to delete image!");
