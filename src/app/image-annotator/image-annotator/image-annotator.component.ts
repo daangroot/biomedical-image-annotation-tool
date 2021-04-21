@@ -11,6 +11,7 @@ import { ImageInfo } from '../../types/image-info.type';
 export class ImageAnnotatorComponent implements OnInit {
   imageId!: string;
   imageInfo!: ImageInfo;
+  navBarHeight!: number;
 
   constructor(
     private route: ActivatedRoute,
@@ -21,6 +22,8 @@ export class ImageAnnotatorComponent implements OnInit {
     this.imageId = routeParams.get('imageId')!;
 
     this.getImageInfo();
+
+    this.navBarHeight = document.getElementById("navbar")!.clientHeight;
   }
 
   private getImageInfo(): void {

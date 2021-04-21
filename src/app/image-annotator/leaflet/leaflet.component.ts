@@ -13,6 +13,8 @@ import { LeafletService } from './leaflet.service';
 export class LeafletComponent implements OnChanges, OnInit {
   @Input() imageId!: string;
   @Input() imageInfo!: ImageInfo;
+  @Input() navBarHeight!: number;
+  leafletContainerCssHeight!: string;
   private map!: L.Map;
   private readonly tileSize: number = 256;
 
@@ -20,28 +22,48 @@ export class LeafletComponent implements OnChanges, OnInit {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.imageInfo && changes.imageInfo.currentValue) {
-      this.setMaxZoomLevel(changes.imageInfo.currentValue);
+      this.initMap(changes.imageInfo.currentValue);
     }
   }
 
   ngOnInit(): void {
-    this.initMap();
+    this.leafletContainerCssHeight = `calc(100% - ${this.navBarHeight}px)`;
   }
 
-  private initMap(): void {
+  private initMap(imageInfo: ImageInfo): void {
+    const sw: L.PointExpression = [0, imageInfo.height];
+    const ne: L.PointExpression = [imageInfo.width, 0];
+
     this.map = L.map('leaflet-viewer', {
-      crs: L.CRS.Simple
+      crs: L.CRS.Simple,
+      maxZoom: this.leafletService.calcMaxZoomLevel(imageInfo.width, imageInfo.height, this.tileSize),
+      zoomControl: false
     });
-    this.map.setView([-this.tileSize / 2, this.tileSize / 2], 0);
+
+    this.map.setView([0, 0], 0);
+    
+    const offset: number = this.tileSize * 5;
+    const swMax: L.PointExpression = [sw[0] - offset, sw[1] + offset];
+    const neMax: L.PointExpression = [ne[0] + offset, ne[1] - offset];
+    this.map.setMaxBounds(this.toLatLngBounds(swMax, neMax));
 
     L.tileLayer(`${environment.apiUrl}/api/images/${this.imageId}/tiles/{z}/{y}/{x}`, {
-      bounds: [[0, 0], [-this.tileSize, this.tileSize]],
+      bounds: this.toLatLngBounds(sw, ne),
       tileSize: this.tileSize
+    }).addTo(this.map);
+
+    L.control.zoom({
+      position: 'bottomright'
     }).addTo(this.map);
   }
 
-  private setMaxZoomLevel(imageInfo: ImageInfo) {
-    const maxZoom = this.leafletService.calcMaxZoomLevel(imageInfo.width, imageInfo.height, this.tileSize);
-    this.map.setMaxZoom(maxZoom);
+  private toLatLngBounds(sw: L.PointExpression, ne: L.PointExpression): L.LatLngBounds {
+    const swLatLng: L.LatLng = this.toLatLng(sw);
+    const neLatLng: L.LatLng = this.toLatLng(ne);
+    return L.latLngBounds(swLatLng, neLatLng);
+  }
+
+  private toLatLng(point: L.PointExpression): L.LatLng {
+    return this.map.unproject(point, this.map.getMaxZoom());
   }
 }
