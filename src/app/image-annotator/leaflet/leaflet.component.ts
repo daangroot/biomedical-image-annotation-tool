@@ -30,13 +30,14 @@ export class LeafletComponent implements OnChanges, OnInit {
 
   private initMap(): void {
     this.map = L.map('leaflet-viewer', {
-      crs: L.CRS.Simple,
-      maxBounds: [[256, -256], [-512, 512]]
+      crs: L.CRS.Simple
     });
-    this.map.setView([0, 0], 0);
+    this.map.setView([-this.tileSize / 2, this.tileSize / 2], 0);
+
+    this.map.on('click', (e:any) => console.log(e.latlng))
 
     L.tileLayer(`${environment.apiUrl}/api/images/${this.imageId}/tiles/{z}/{y}/{x}`, {
-      bounds: [[0, 0], [-256, 256]],
+      bounds: [[0, 0], [-this.tileSize, this.tileSize]],
       tileSize: this.tileSize
     }).addTo(this.map);
   }
