@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import * as OpenSeadragon from 'openseadragon';
-import * as Annotorious from '@recogito/annotorious-openseadragon';
-
-import { environment } from '../../../environments/environment';
+import { ImageService } from '../../services/image.service';
+import { ImageInfo } from '../../types/image-info.type';
 
 @Component({
   selector: 'app-image-annotator',
@@ -11,20 +9,24 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['./image-annotator.component.css']
 })
 export class ImageAnnotatorComponent implements OnInit {
+  imageId!: string;
+  imageInfo!: ImageInfo;
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(
+    private route: ActivatedRoute,
+    private imageService: ImageService) { }
 
   ngOnInit(): void {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
-    const imageId: string | null = routeParams.get('imageId');
+    this.imageId = routeParams.get('imageId')!;
 
-    const viewer: OpenSeadragon.Viewer = OpenSeadragon({
-      id: 'openseadragon-viewer',
-      prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
-      tileSources: `${environment.apiUrl}/api/images/${imageId}/dzi/dzi.dzi`
-    });
+    this.getImageInfo();
+  }
 
-    const anno = Annotorious(viewer, { });
-    anno.setDrawingTool('polygon');
+  private getImageInfo(): void {
+    this.imageService.getImageInfo(this.imageId)
+      .subscribe(
+        imageInfo => this.imageInfo = imageInfo
+      )
   }
 }

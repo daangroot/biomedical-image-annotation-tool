@@ -9,7 +9,6 @@ import { ImageService } from '../../services/image.service';
 export class ImageUploadComponent implements OnInit {
   file: File | null = null;
   isUploading: boolean = false;
-  isImageUploaded: boolean = true;
 
   constructor(private imageService: ImageService) { }
 
@@ -27,12 +26,14 @@ export class ImageUploadComponent implements OnInit {
     }
 
     this.isUploading = true;
-    this.isImageUploaded = false;
 
     this.imageService.addImage(this.file)
       .subscribe(
         next => window.location.reload(),
-        error => this.isUploading = false
+        error => {
+          this.isUploading = false;
+          window.alert('Failed to upload image!');
+        }
       )
   }
 }

@@ -43,7 +43,7 @@ export class ImageListComponent implements OnInit {
 
     this.imageService.deleteImage(id)
       .subscribe(
-        next => window.location.reload(),
+        next => this.getAllImageData(),
         error => {
           this.deletedImageId = null;
           window.alert("Failed to delete image!");

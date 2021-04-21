@@ -11,7 +11,7 @@
     <a href="/images/{{ imageInfo.id }}" class="list-group-item list-group-item-action" *ngFor="let imageInfo of imageInfos">
       <div class="image-info">
         <div>
-          <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/dzi/dzi_files/7/0_0.png" width="128">
+          <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/thumbnail" width="128">
         </div>
         <div>
           <div>File: {{ imageInfo.originalName }}</div>

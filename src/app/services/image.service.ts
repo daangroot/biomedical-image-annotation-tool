@@ -11,8 +11,12 @@ export class ImageService {
 
   constructor(private http: HttpClient) { }
 
+  getImageInfo(id: string): Observable<ImageInfo> {
+    return this.http.get<ImageInfo>(`${this.imagesDataUrl}/${id}/info`);
+  }
+
   getImageInfos(): Observable<ImageInfo[]> {
-    return this.http.get<ImageInfo[]>(this.imagesDataUrl);
+    return this.http.get<ImageInfo[]>(this.imagesDataUrl + '/info');
   }
 
   addImage(file: File): Observable<any> {

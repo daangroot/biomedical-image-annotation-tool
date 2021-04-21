@@ -11,7 +11,4 @@
   </div>
   <button type="button" class="btn btn-primary" (click)="uploadImage()" *ngIf="file && !isUploading">Upload image</button>
   <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
-  <div class="alert alert-danger" role="alert" *ngIf="!isUploading && !isImageUploaded">
-    Failed to upload image to server!
-  </div>
 </div>
