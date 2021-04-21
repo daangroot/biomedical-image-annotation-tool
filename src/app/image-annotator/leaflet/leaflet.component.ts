@@ -3,6 +3,7 @@ import * as L from 'leaflet';
 
 import { environment } from '../../../environments/environment';
 import { ImageInfo } from '../../types/image-info.type';
+import { LeafletService } from './leaflet.service';
 
 @Component({
   selector: 'app-leaflet',
@@ -15,11 +16,11 @@ export class LeafletComponent implements OnChanges, OnInit {
   private map!: L.Map;
   private readonly tileSize: number = 256;
 
-  constructor() { }
+  constructor(private leafletService: LeafletService) { }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.imageInfo && changes.imageInfo.currentValue) {
-      this.setMaxZoomLevel(changes.imageInfo.currentValue.width, changes.imageInfo.currentValue.height);
+      this.setMaxZoomLevel(changes.imageInfo.currentValue);
     }
   }
 
@@ -40,13 +41,8 @@ export class LeafletComponent implements OnChanges, OnInit {
     }).addTo(this.map);
   }
 
-  private setMaxZoomLevel(width: number, height: number) {
-    let val: number = Math.max(width, height);
-    let level: number = 0;
-    while (val > this.tileSize) {
-      val /= 2;
-      level++;
-    }
-    this.map.setMaxZoom(level);
+  private setMaxZoomLevel(imageInfo: ImageInfo) {
+    const maxZoom = this.leafletService.calcMaxZoomLevel(imageInfo.width, imageInfo.height, this.tileSize);
+    this.map.setMaxZoom(maxZoom);
   }
 }
