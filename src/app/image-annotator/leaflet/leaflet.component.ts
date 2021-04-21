@@ -34,8 +34,6 @@ export class LeafletComponent implements OnChanges, OnInit {
     });
     this.map.setView([-this.tileSize / 2, this.tileSize / 2], 0);
 
-    this.map.on('click', (e:any) => console.log(e.latlng))
-
     L.tileLayer(`${environment.apiUrl}/api/images/${this.imageId}/tiles/{z}/{y}/{x}`, {
       bounds: [[0, 0], [-this.tileSize, this.tileSize]],
       tileSize: this.tileSize
