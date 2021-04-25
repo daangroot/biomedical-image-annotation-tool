@@ -1,0 +1,29 @@
+<button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#image-properties" aria-controls="#image-properties">Properties</button>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="image-properties" aria-labelledby="image-properties-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="image-properties-label">Properties</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div *ngIf="imageInfo">
+            <h6>Mask</h6>
+            <div class="mb-3">
+                <input class="form-control" type="file" id="mask-file" (change)="fileChange($event)">
+                <button type="button" class="btn btn-primary" (click)="uploadMask()" *ngIf="maskFile && !isUploading">Upload</button>
+                <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
+            </div>
+            <h6>Information</h6>
+            <div class="card">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">ID: {{ imageInfo.id }}</li>
+                    <li class="list-group-item">Name: {{ imageInfo.originalName }}</li>
+                    <li class="list-group-item">Encoding: {{ imageInfo.encoding }}</li>
+                    <li class="list-group-item">MIME type: {{ imageInfo.mimeType }}</li>
+                    <li class="list-group-item">Resolution: {{ imageInfo.width }} x {{ imageInfo.height }}</li>
+                    <li class="list-group-item">Size: {{ imageInfo.size / 1048576 | number:'1.0-2' }} MB</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,12 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ImageAnnotatorComponent } from './image-annotator/image-annotator.component';
 import { ImageAnnotatorRoutingModule } from './image-annotator-routing.module';
 import { LeafletComponent } from './leaflet/leaflet.component';
+import { ImagePropertiesComponent } from './image-properties/image-properties.component';
 
 
 @NgModule({
   declarations: [
     ImageAnnotatorComponent,
-    LeafletComponent
+    LeafletComponent,
+    ImagePropertiesComponent
   ],
   imports: [
     CommonModule,
