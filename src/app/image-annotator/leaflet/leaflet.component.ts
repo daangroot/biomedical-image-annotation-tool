@@ -1,5 +1,7 @@
 import { Input, Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+
 import * as L from 'leaflet';
+import { PropertiesButton } from './properties-button';
 
 import { environment } from '../../../environments/environment';
 import { ImageInfo } from '../../types/image-info.type';
@@ -55,6 +57,11 @@ export class LeafletComponent implements OnChanges, OnInit {
     L.control.zoom({
       position: 'bottomright'
     }).addTo(this.map);
+
+    const button = new PropertiesButton({
+      position: 'topleft'
+    });
+    button.addTo(this.map);
   }
 
   private toLatLngBounds(sw: L.PointExpression, ne: L.PointExpression): L.LatLngBounds {

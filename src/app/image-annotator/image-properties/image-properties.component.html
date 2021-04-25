@@ -1,4 +1,4 @@
-<button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#image-properties" aria-controls="#image-properties">Properties</button>
+<!--<button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#image-properties" aria-controls="#image-properties">Properties</button>-->
 
 <div class="offcanvas offcanvas-start" tabindex="-1" id="image-properties" aria-labelledby="image-properties-label">
     <div class="offcanvas-header">
@@ -16,12 +16,12 @@
             <h6>Information</h6>
             <div class="card">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">ID: {{ imageInfo.id }}</li>
-                    <li class="list-group-item">Name: {{ imageInfo.originalName }}</li>
-                    <li class="list-group-item">Encoding: {{ imageInfo.encoding }}</li>
-                    <li class="list-group-item">MIME type: {{ imageInfo.mimeType }}</li>
-                    <li class="list-group-item">Resolution: {{ imageInfo.width }} x {{ imageInfo.height }}</li>
-                    <li class="list-group-item">Size: {{ imageInfo.size / 1048576 | number:'1.0-2' }} MB</li>
+                    <li class="list-group-item"><strong>ID:</strong> {{ imageInfo.id }}</li>
+                    <li class="list-group-item"><strong>Name:</strong> {{ imageInfo.originalName }}</li>
+                    <li class="list-group-item"><strong>Encoding:</strong> {{ imageInfo.encoding }}</li>
+                    <li class="list-group-item"><strong>MIME type:</strong> {{ imageInfo.mimeType }}</li>
+                    <li class="list-group-item"><strong>Resolution:</strong> {{ imageInfo.width }} x {{ imageInfo.height }}</li>
+                    <li class="list-group-item"><strong>Size:</strong> {{ imageInfo.size / 1048576 | number:'1.0-2' }} MB</li>
                 </ul>
             </div>
         </div>
