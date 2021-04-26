@@ -11,6 +11,7 @@ import { ImageInfo } from '../../types/image-info.type';
 export class ImageAnnotatorComponent implements OnInit {
   imageId!: string;
   imageInfo!: ImageInfo;
+  maskInfos!: ImageInfo[];
   navBarHeight!: number;
 
   constructor(
@@ -22,6 +23,7 @@ export class ImageAnnotatorComponent implements OnInit {
     this.imageId = routeParams.get('imageId')!;
 
     this.getImageInfo();
+    this.getMaskInfos();
 
     this.navBarHeight = document.getElementById("navbar")!.clientHeight;
   }
@@ -30,6 +32,13 @@ export class ImageAnnotatorComponent implements OnInit {
     this.imageService.getImageInfo(this.imageId)
       .subscribe(
         imageInfo => this.imageInfo = imageInfo
+      )
+  }
+
+  private getMaskInfos(): void {
+    this.imageService.getMaskInfos(this.imageId)
+      .subscribe(
+        maskInfos => this.maskInfos = maskInfos
       )
   }
 }

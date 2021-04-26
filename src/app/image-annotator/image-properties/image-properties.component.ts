@@ -10,6 +10,7 @@ import { ImageInfo } from 'src/app/types/image-info.type';
 })
 export class ImagePropertiesComponent implements OnInit {
   @Input() imageInfo!: ImageInfo;
+  @Input() maskInfos!: ImageInfo[];
 
   maskFile: File | null = null;
   isUploading = false;
