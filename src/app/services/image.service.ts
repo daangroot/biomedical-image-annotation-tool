@@ -21,7 +21,7 @@ export class ImageService {
 
   addImage(file: File): Observable<any> {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
 
     const params = new HttpParams();
     const options = {
@@ -37,8 +37,8 @@ export class ImageService {
 
   addMask(imageId: string, file: File): Observable<any> {
     const formData = new FormData();
-    formData.append('mask', file);
+    formData.append('file', file);
 
-    return this.http.post(`${this.imagesDataUrl}/${imageId}/mask`, formData);
+    return this.http.post(`${this.imagesDataUrl}/${imageId}/masks`, formData);
   }
 }
