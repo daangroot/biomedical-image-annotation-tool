@@ -7,14 +7,24 @@
     </div>
     <div class="offcanvas-body">
         <div *ngIf="imageInfo">
-            <h6>Mask</h6>
+            <h6>Segmentation mask</h6>
             <div class="mb-3">
                 <input class="form-control" type="file" id="mask-file" (change)="fileChange($event)">
                 <button type="button" class="btn btn-primary" (click)="uploadMask()" *ngIf="maskFile && !isUploading">Upload</button>
                 <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
             </div>
+            <div class="list-group mb-3" *ngIf="imageInfo && maskInfos">
+                <div class="list-group-item" *ngFor="let maskInfo of maskInfos">
+                    <div>
+                        <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/masks/{{ maskInfo.id }}/thumbnail" width="96">
+                    </div>
+                    <div>
+                        <strong>ID:</strong> {{ maskInfo.id }}
+                    </div>
+                </div>
+            </div>
             <h6>Information</h6>
-            <div class="card">
+            <div class="card mb-3">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>ID:</strong> {{ imageInfo.id }}</li>
                     <li class="list-group-item"><strong>Name:</strong> {{ imageInfo.originalName }}</li>

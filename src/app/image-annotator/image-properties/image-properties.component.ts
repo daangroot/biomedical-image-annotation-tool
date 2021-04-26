@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 
 import { ImageService } from 'src/app/services/image.service';
 import { ImageInfo } from 'src/app/types/image-info.type';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-image-properties',
@@ -11,6 +12,8 @@ import { ImageInfo } from 'src/app/types/image-info.type';
 export class ImagePropertiesComponent implements OnInit {
   @Input() imageInfo!: ImageInfo;
   @Input() maskInfos!: ImageInfo[];
+
+  environment = environment;
 
   maskFile: File | null = null;
   isUploading = false;
