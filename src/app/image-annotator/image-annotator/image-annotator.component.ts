@@ -10,6 +10,7 @@ import { ImageInfo } from '../../types/image-info.type';
 })
 export class ImageAnnotatorComponent implements OnInit {
   imageInfo!: ImageInfo;
+  maskInfos!: ImageInfo[];
 
   constructor(
     private route: ActivatedRoute,
@@ -18,7 +19,9 @@ export class ImageAnnotatorComponent implements OnInit {
   ngOnInit(): void {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
     const imageId: string = routeParams.get('imageId')!;
+
     this.getImageInfo(imageId);
+    this.getMaskInfos(imageId);
   }
 
   private getImageInfo(imageId: string): void {
@@ -26,6 +29,13 @@ export class ImageAnnotatorComponent implements OnInit {
       .subscribe(
         imageInfo => this.imageInfo = imageInfo,
         error => window.alert('Failed to get data from server!')
+      )
+  }
+
+  private getMaskInfos(imageId: string): void {
+    this.imageService.getMaskInfos(imageId)
+      .subscribe(
+        maskInfos => this.maskInfos = maskInfos
       )
   }
 }

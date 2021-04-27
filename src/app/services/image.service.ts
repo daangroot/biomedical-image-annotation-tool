@@ -34,4 +34,15 @@ export class ImageService {
   deleteImage(id: string): Observable<any> {
     return this.http.delete(`${this.imagesDataUrl}/${id}`);
   }
+
+  getMaskInfos(imageId: string): Observable<ImageInfo[]> {
+    return this.http.get<ImageInfo[]>(`${this.imagesDataUrl}/${imageId}/masks/info`);
+  }
+
+  addMask(imageId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post(`${this.imagesDataUrl}/${imageId}/masks`, formData);
+  }
 }

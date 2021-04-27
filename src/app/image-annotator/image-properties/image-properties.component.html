@@ -1,0 +1,39 @@
+<!--<button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#image-properties" aria-controls="#image-properties">Properties</button>-->
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="image-properties" aria-labelledby="image-properties-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="image-properties-label">Properties</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div *ngIf="imageInfo">
+            <h6>Segmentation mask</h6>
+            <div class="mb-3">
+                <input class="form-control" type="file" id="mask-file" (change)="fileChange($event)">
+                <button type="button" class="btn btn-primary" (click)="uploadMask()" *ngIf="maskFile && !isUploading">Upload</button>
+                <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
+            </div>
+            <div class="list-group mb-3" *ngIf="imageInfo && maskInfos">
+                <div class="list-group-item" *ngFor="let maskInfo of maskInfos">
+                    <div>
+                        <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/masks/{{ maskInfo.id }}/thumbnail" width="96">
+                    </div>
+                    <div>
+                        <strong>ID:</strong> {{ maskInfo.id }}
+                    </div>
+                </div>
+            </div>
+            <h6>Information</h6>
+            <div class="card mb-3">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>ID:</strong> {{ imageInfo.id }}</li>
+                    <li class="list-group-item"><strong>Name:</strong> {{ imageInfo.originalName }}</li>
+                    <li class="list-group-item"><strong>Encoding:</strong> {{ imageInfo.encoding }}</li>
+                    <li class="list-group-item"><strong>MIME type:</strong> {{ imageInfo.mimeType }}</li>
+                    <li class="list-group-item"><strong>Resolution:</strong> {{ imageInfo.width }} x {{ imageInfo.height }}</li>
+                    <li class="list-group-item"><strong>Size:</strong> {{ imageInfo.size / 1048576 | number:'1.0-2' }} MB</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
