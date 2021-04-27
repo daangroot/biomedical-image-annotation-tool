@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ImageService } from '../../services/image.service';
+import { ApiService } from '../../services/api.service';
 import { ImageInfo } from '../../types/image-info.type';
 import { environment } from '../../../environments/environment';
 
@@ -15,7 +15,7 @@ export class ImageListComponent implements OnInit {
   isDataLoaded: boolean = true;
   deletedImageId: string | null = null;
 
-  constructor(private imageService: ImageService) { }
+  constructor(private apiService: ApiService) { }
 
   ngOnInit(): void {
     this.getAllImageInfos();
@@ -25,7 +25,7 @@ export class ImageListComponent implements OnInit {
     this.isLoading = true;
     this.isDataLoaded = false;
 
-    this.imageService.getImageInfos()
+    this.apiService.fetchBioImageInfos()
       .subscribe(
         imageInfos => {
           this.imageInfos = imageInfos;
@@ -41,7 +41,7 @@ export class ImageListComponent implements OnInit {
 
     this.deletedImageId = id;
 
-    this.imageService.deleteImage(id)
+    this.apiService.deleteBioImage(id)
       .subscribe(
         next => this.getAllImageInfos(),
         error => {

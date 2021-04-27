@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { ImageService } from '../../services/image.service';
+import { ApiService } from '../../services/api.service';
 import { ImageInfo } from '../../types/image-info.type';
 
 @Component({
@@ -9,33 +9,24 @@ import { ImageInfo } from '../../types/image-info.type';
   styleUrls: ['./image-annotator.component.css']
 })
 export class ImageAnnotatorComponent implements OnInit {
-  imageInfo!: ImageInfo;
-  maskInfos!: ImageInfo[];
+  bioImageInfo!: ImageInfo;
 
   constructor(
     private route: ActivatedRoute,
-    private imageService: ImageService) { }
+    private apiService: ApiService) { }
 
   ngOnInit(): void {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
-    const imageId: string = routeParams.get('imageId')!;
+    const bioImageId: string = routeParams.get('imageId')!;
 
-    this.getImageInfo(imageId);
-    this.getMaskInfos(imageId);
+    this.fetchBioImageInfo(bioImageId);
   }
 
-  private getImageInfo(imageId: string): void {
-    this.imageService.getImageInfo(imageId)
+  private fetchBioImageInfo(id: string): void {
+    this.apiService.fetchBioImageInfo(id)
       .subscribe(
-        imageInfo => this.imageInfo = imageInfo,
+        info => this.bioImageInfo = info,
         error => window.alert('Failed to get data from server!')
-      )
-  }
-
-  private getMaskInfos(imageId: string): void {
-    this.imageService.getMaskInfos(imageId)
-      .subscribe(
-        maskInfos => this.maskInfos = maskInfos
       )
   }
 }

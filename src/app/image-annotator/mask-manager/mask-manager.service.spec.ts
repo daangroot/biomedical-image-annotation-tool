@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { ImageService } from './image.service';
+import { MaskManagerService } from './mask-manager.service';
 
-describe('ImageService', () => {
-  let service: ImageService;
+describe('MaskManagerService', () => {
+  let service: MaskManagerService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(ImageService);
+    service = TestBed.inject(MaskManagerService);
   });
 
   it('should be created', () => {

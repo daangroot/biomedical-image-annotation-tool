@@ -1,2 +1,5 @@
-<app-image-properties [imageInfo]="imageInfo" [maskInfos]="maskInfos"></app-image-properties>
-<app-leaflet [imageInfo]="imageInfo"></app-leaflet>
+<div *ngIf="bioImageInfo">
+  <app-leaflet [bioImageInfo]="bioImageInfo"></app-leaflet>
+  <app-mask-manager [bioImageInfo]="bioImageInfo"></app-mask-manager>
+</div>
+

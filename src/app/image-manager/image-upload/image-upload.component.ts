@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ImageService } from '../../services/image.service';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-image-upload',
@@ -10,7 +10,7 @@ export class ImageUploadComponent implements OnInit {
   file: File | null = null;
   isUploading: boolean = false;
 
-  constructor(private imageService: ImageService) { }
+  constructor(private apiService: ApiService) { }
 
   ngOnInit(): void {
   }
@@ -27,7 +27,7 @@ export class ImageUploadComponent implements OnInit {
 
     this.isUploading = true;
 
-    this.imageService.addImage(this.file)
+    this.apiService.postBioImage(this.file)
       .subscribe(
         next => window.location.reload(),
         error => {

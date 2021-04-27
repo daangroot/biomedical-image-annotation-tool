@@ -1,0 +1,37 @@
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mask-manager-offcanvas" aria-labelledby="mask-manager-offcanvas">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Masks</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="mb-4">
+      <h6>Add mask</h6>
+      <input class="form-control mb-2" type="file" id="mask-file" (change)="fileChange($event)">
+      <button type="button" class="btn btn-primary" (click)="uploadMask($event)" *ngIf="file && !isUploading">Upload</button>
+      <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
+    </div>
+    <div class="list-group mb-4">
+      <h6>Uploaded masks</h6>
+      <div class="alert alert-primary" role="alert" *ngIf="maskInfos.length === 0 && !isLoading && isDataLoaded">
+        No masks found.
+      </div>
+      <div class="alert alert-danger" role="alert" *ngIf="!isLoading && !isDataLoaded">
+        Failed to retrieve masks from server!
+      </div>
+      <div class="list-group" *ngIf="isDataLoaded">
+        <a href="#" class="list-group-item list-group-item-action" [ngClass]="selectedMaskId === maskInfo.id ? 'active'  : ''" (click)="selectMask($event, maskInfo.id)" *ngFor="let maskInfo of maskInfos">
+          <div class="mask-info">
+            <div>
+              <img src="{{ environment.apiUrl }}/api/images/{{ bioImageInfo.id }}/masks/{{ maskInfo.id }}/thumbnail" width="64" height="64">
+            </div>
+            <div>
+              <div><strong>File:</strong> {{ maskInfo.originalName }}</div>
+              <button type="button" class="btn btn-danger" (click)="deleteMask($event, maskInfo.id)" *ngIf="deletedMaskId !== maskInfo.id">Delete</button>
+              <div class="spinner-border text-primary" role="status" *ngIf="deletedMaskId === maskInfo.id"></div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

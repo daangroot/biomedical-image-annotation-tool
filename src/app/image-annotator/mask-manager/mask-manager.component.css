@@ -1,0 +1,11 @@
+.mask-info {
+  display: flex;
+}
+
+.mask-info > div {
+  margin-right: 1.25rem;
+}
+
+.alert {
+  padding: 0.5rem 0.5rem;
+}

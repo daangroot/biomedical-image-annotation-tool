@@ -1,6 +1,6 @@
-<div id="image-upload">
+<div id="image-upload" class="mt-4 mb-4">
   <h4>Add image</h4>
-  <input class="form-control" type="file" id="image-input" (change)="fileChange($event)">
+  <input class="form-control mb-2" type="file" id="image-input" (change)="fileChange($event)">
   <button type="button" class="btn btn-primary" (click)="uploadImage()" *ngIf="file && !isUploading">Upload image</button>
   <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
 </div>

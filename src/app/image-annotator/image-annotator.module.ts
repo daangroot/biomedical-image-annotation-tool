@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ImageAnnotatorComponent } from './image-annotator/image-annotator.component';
 import { ImageAnnotatorRoutingModule } from './image-annotator-routing.module';
 import { LeafletComponent } from './leaflet/leaflet.component';
-import { ImagePropertiesComponent } from './image-properties/image-properties.component';
+import { MaskManagerComponent } from './mask-manager/mask-manager.component';
 
 
 @NgModule({
   declarations: [
     ImageAnnotatorComponent,
     LeafletComponent,
-    ImagePropertiesComponent
+    MaskManagerComponent
   ],
   imports: [
     CommonModule,
