@@ -2,8 +2,11 @@ import { Input, Component, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import * as L from 'leaflet';
 
 import { environment } from '../../../environments/environment';
+import { HeaderService } from '../../header/header.service';
 import { ImageInfo } from '../../types/image-info.type';
 import { LeafletService } from './leaflet.service';
+
+import { ImageService } from '../../services/image.service';
 
 @Component({
   selector: 'app-leaflet',
@@ -11,14 +14,14 @@ import { LeafletService } from './leaflet.service';
   styleUrls: ['./leaflet.component.css']
 })
 export class LeafletComponent implements OnChanges, OnInit {
-  @Input() imageId!: string;
   @Input() imageInfo!: ImageInfo;
-  @Input() navBarHeight!: number;
   leafletContainerCssHeight!: string;
   private map!: L.Map;
   private readonly tileSize: number = 256;
 
-  constructor(private leafletService: LeafletService) { }
+  constructor(private headerService: HeaderService,
+    private leafletService: LeafletService,
+    private imageService: ImageService) { }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.imageInfo && changes.imageInfo.currentValue) {
@@ -27,7 +30,7 @@ export class LeafletComponent implements OnChanges, OnInit {
   }
 
   ngOnInit(): void {
-    this.leafletContainerCssHeight = `calc(100% - ${this.navBarHeight}px)`;
+    this.leafletContainerCssHeight = `calc(100% - ${this.headerService.headerHeight}px)`;
   }
 
   private initMap(imageInfo: ImageInfo): void {
@@ -47,7 +50,7 @@ export class LeafletComponent implements OnChanges, OnInit {
     const neMax: L.PointExpression = [ne[0] + offset, ne[1] - offset];
     this.map.setMaxBounds(this.toLatLngBounds(swMax, neMax));
 
-    L.tileLayer(`${environment.apiUrl}/api/images/${this.imageId}/tiles/{z}/{y}/{x}`, {
+    L.tileLayer(`${environment.apiUrl}/api/images/${imageInfo.id}/tiles/{z}/{y}/{x}`, {
       bounds: this.toLatLngBounds(sw, ne),
       tileSize: this.tileSize
     }).addTo(this.map);

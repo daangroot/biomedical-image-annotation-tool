@@ -9,9 +9,7 @@ import { ImageInfo } from '../../types/image-info.type';
   styleUrls: ['./image-annotator.component.css']
 })
 export class ImageAnnotatorComponent implements OnInit {
-  imageId!: string;
   imageInfo!: ImageInfo;
-  navBarHeight!: number;
 
   constructor(
     private route: ActivatedRoute,
@@ -19,17 +17,15 @@ export class ImageAnnotatorComponent implements OnInit {
 
   ngOnInit(): void {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
-    this.imageId = routeParams.get('imageId')!;
-
-    this.getImageInfo();
-
-    this.navBarHeight = document.getElementById("navbar")!.clientHeight;
+    const imageId: string = routeParams.get('imageId')!;
+    this.getImageInfo(imageId);
   }
 
-  private getImageInfo(): void {
-    this.imageService.getImageInfo(this.imageId)
+  private getImageInfo(imageId: string): void {
+    this.imageService.getImageInfo(imageId)
       .subscribe(
-        imageInfo => this.imageInfo = imageInfo
+        imageInfo => this.imageInfo = imageInfo,
+        error => window.alert('Failed to get data from server!')
       )
   }
 }

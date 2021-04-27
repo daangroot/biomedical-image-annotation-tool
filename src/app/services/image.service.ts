@@ -21,7 +21,7 @@ export class ImageService {
 
   addImage(file: File): Observable<any> {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
 
     const params = new HttpParams();
     const options = {
