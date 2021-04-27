@@ -1,7 +1,6 @@
 import { Input, Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 
 import * as L from 'leaflet';
-import { PropertiesButton } from './properties-button';
 
 import { environment } from '../../../environments/environment';
 import { HeaderService } from '../../header/header.service';
@@ -57,14 +56,24 @@ export class LeafletComponent implements OnChanges, OnInit {
       tileSize: this.tileSize
     }).addTo(this.map);
 
+    this.addControls(imageInfo)
+  }
+
+  private addControls(imageInfo: ImageInfo): void {
     L.control.zoom({
       position: 'bottomright'
     }).addTo(this.map);
 
-    const button = new PropertiesButton({
-      position: 'topleft'
-    });
-    button.addTo(this.map);
+    const button: HTMLElement = L.DomUtil.create('a');
+    button.setAttribute('data-bs-toggle', 'offcanvas');
+    button.setAttribute('href', '#image-properties');
+    button.style.backgroundImage = 'url("/assets/polygon.png")';
+    button.style.backgroundSize = '24px 24px';
+    const maskButtonControl = this.leafletService.createButtonControl(button, "topleft");
+    maskButtonControl.addTo(this.map);
+
+    const imageNameControl = this.leafletService.createTextControl(imageInfo.originalName, "bottomleft");
+    imageNameControl.addTo(this.map);    
   }
 
   private toLatLngBounds(sw: L.PointExpression, ne: L.PointExpression): L.LatLngBounds {
