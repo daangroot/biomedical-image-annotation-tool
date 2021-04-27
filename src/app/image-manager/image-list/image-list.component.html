@@ -14,10 +14,10 @@
           <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/thumbnail" width="128">
         </div>
         <div>
-          <div>File: {{ imageInfo.originalName }}</div>
-          <div>MIME type: {{ imageInfo.mimeType }}</div>
-          <div>Resolution: {{ imageInfo.width }} x {{ imageInfo.height }}</div>
-          <div>Size: {{ (imageInfo.size / 1048576) | number:'1.0-2' }} MB</div>
+          <div><strong>File:</strong> {{ imageInfo.originalName }}</div>
+          <div><strong>MIME type:</strong> {{ imageInfo.mimeType }}</div>
+          <div><strong>Resolution:</strong> {{ imageInfo.width }} x {{ imageInfo.height }}</div>
+          <div><strong>Size:</strong> {{ (imageInfo.size / 1048576) | number:'1.0-2' }} MB</div>
         </div>
         <div>
           <button type="button" class="btn btn-danger" (click)="deleteImage($event, imageInfo.id)" *ngIf="deletedImageId !== imageInfo.id">Delete</button>
