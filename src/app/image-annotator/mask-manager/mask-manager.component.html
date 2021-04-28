@@ -6,7 +6,7 @@
   <div class="offcanvas-body">
     <div class="mb-4">
       <h6>Add mask</h6>
-      <input class="form-control mb-2" type="file" id="mask-file" (change)="fileChange($event)">
+      <input #fileInput class="form-control mb-2" type="file" id="mask-file" (change)="fileChange($event)">
       <button type="button" class="btn btn-primary" (click)="uploadMask($event)" *ngIf="file && !isUploading">Upload</button>
       <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
     </div>
@@ -18,11 +18,11 @@
       <div class="alert alert-danger" role="alert" *ngIf="!isLoading && !isDataLoaded">
         Failed to retrieve masks from server!
       </div>
-      <div class="list-group" *ngIf="isDataLoaded">
-        <a href="#" class="list-group-item list-group-item-action" [ngClass]="selectedMaskId === maskInfo.id ? 'active'  : ''" (click)="selectMask($event, maskInfo.id)" *ngFor="let maskInfo of maskInfos">
-          <div class="mask-info">
-            <div>
-              <img src="{{ environment.apiUrl }}/api/images/{{ bioImageInfo.id }}/masks/{{ maskInfo.id }}/thumbnail" width="64" height="64">
+      <ul class="list-group" *ngIf="isDataLoaded">
+        <li class="list-group-item" [ngClass]="selectedMaskId === maskInfo.id ? 'active'  : ''" *ngFor="let maskInfo of maskInfos">
+          <div class="mask-info d-flex">
+            <div class="me-3">
+              <img src="{{ environment.apiUrl }}/api/images/{{ bioImageInfo.id }}/masks/{{ maskInfo.id }}/thumbnail" width="64" height="64" (click)="selectMask(maskInfo.id)">
             </div>
             <div>
               <div><strong>File:</strong> {{ maskInfo.originalName }}</div>
@@ -30,8 +30,8 @@
               <div class="spinner-border text-primary" role="status" *ngIf="deletedMaskId === maskInfo.id"></div>
             </div>
           </div>
-        </a>
-      </div>
+        </li>
+      </ul>
     </div>
   </div>
 </div>

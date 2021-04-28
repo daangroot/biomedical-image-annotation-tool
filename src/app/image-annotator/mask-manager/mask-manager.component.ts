@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Event } from '@angular/router';
 
 import { ApiService } from 'src/app/services/api.service';
 import { ImageInfo } from 'src/app/types/image-info.type';
@@ -11,9 +12,12 @@ import { MaskManagerService } from './mask-manager.service';
   styleUrls: ['./mask-manager.component.css']
 })
 export class MaskManagerComponent implements OnInit {
+  @ViewChild('fileInput')
+  fileInput!: ElementRef;
+
   @Input() bioImageInfo!: ImageInfo;
   maskInfos: ImageInfo[] = [];
-  selectedMaskId!: string;
+  selectedMaskId: string | null = null;
 
   isLoading: boolean = true;
   isDataLoaded: boolean = false;
@@ -38,12 +42,13 @@ export class MaskManagerComponent implements OnInit {
     this.file = fileList.length > 0 ? fileList[0] : null;
   }
 
-  selectMask(event: MouseEvent, id: string): void {
-    event.preventDefault();
-    event.stopPropagation();
-
-    this.selectedMaskId = id;
-    this.maskManagerService.setSelectedMask(id);
+  selectMask(id: string): void {
+    if (this.selectedMaskId !== id) {
+      this.selectedMaskId = id;
+    } else {
+      this.selectedMaskId = null;
+    }
+    this.maskManagerService.setSelectedMask(this.selectedMaskId);
   }
 
   private fetchMaskInfos(): void {
@@ -62,7 +67,6 @@ export class MaskManagerComponent implements OnInit {
   }
 
   uploadMask(event: MouseEvent): void {
-    event.preventDefault();
     event.stopPropagation();
 
     if (!this.file) {
@@ -76,6 +80,7 @@ export class MaskManagerComponent implements OnInit {
         next => {
           this.isUploading = false;
           this.file = null;
+          this.fileInput.nativeElement.value = '';
           this.fetchMaskInfos();
         },
         error => {
@@ -86,7 +91,6 @@ export class MaskManagerComponent implements OnInit {
   }
 
   deleteMask(event: MouseEvent, id: string): void {
-    event.preventDefault();
     event.stopPropagation();
 
     if (!window.confirm("Are you sure you want to delete this mask?"))

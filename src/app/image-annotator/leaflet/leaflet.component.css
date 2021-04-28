@@ -1,9 +1,16 @@
 #leaflet-viewer-container {
+  display: flex;
+  justify-content: space-between;
   position: absolute;
   width: 100%;
+  background-color: #f8f9fa;
 }
 
-#leaflet-viewer {
+#leaflet-viewer-base {
+  width: calc(50% - 0.25rem);
+}
+
+.leaflet-viewer {
   width: 100%;
   height: 100%;
 }

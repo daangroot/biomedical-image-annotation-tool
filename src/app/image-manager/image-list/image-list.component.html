@@ -7,13 +7,15 @@
   <div class="alert alert-danger" role="alert" *ngIf="!isLoading && !isDataLoaded">
     Failed to retrieve images from server!
   </div>
-  <div class="list-group" *ngIf="isDataLoaded">
-    <a href="/images/{{ imageInfo.id }}" class="list-group-item list-group-item-action" *ngFor="let imageInfo of imageInfos">
-      <div class="image-info">
-        <div>
-          <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/thumbnail" width="128">
+  <ul class="list-group" *ngIf="isDataLoaded">
+    <li class="list-group-item" *ngFor="let imageInfo of imageInfos">
+      <div class="image-info d-flex">
+        <div class="me-3">
+          <a href="/images/{{ imageInfo.id }}">
+            <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/thumbnail" width="128">
+          </a>
         </div>
-        <div>
+        <div class="me-3">
           <div><strong>File:</strong> {{ imageInfo.originalName }}</div>
           <div><strong>MIME type:</strong> {{ imageInfo.mimeType }}</div>
           <div><strong>Resolution:</strong> {{ imageInfo.width }} x {{ imageInfo.height }}</div>
@@ -23,8 +25,8 @@
           <button type="button" class="btn btn-danger" (click)="deleteImage($event, imageInfo.id)" *ngIf="deletedImageId !== imageInfo.id">Delete</button>
           <div class="spinner-border text-primary" role="status" *ngIf="deletedImageId === imageInfo.id"></div>
         </div>
-      </div>
-    </a>
-  </div>
+       </div>
+    </li>
+  </ul>
 </div>
 

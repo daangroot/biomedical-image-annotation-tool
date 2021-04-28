@@ -1,3 +1,4 @@
 <div id="leaflet-viewer-container" [style.height]="leafletContainerCssHeight">
-  <div id="leaflet-viewer"></div>
+  <div id="leaflet-viewer-base" class="leaflet-viewer" [ngStyle]="{'display': showBaseMap ? 'block' : 'none'}"></div>
+  <div id="leaflet-viewer-mask" class="leaflet-viewer" [ngStyle]="{'width': showBaseMap ? 'calc(50% - 0.25rem)' : '100%'}"></div>
 </div>
