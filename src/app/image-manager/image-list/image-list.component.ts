@@ -39,6 +39,9 @@ export class ImageListComponent implements OnInit {
   deleteImage(event: MouseEvent, id: string): void {
     event.preventDefault();
 
+    if (!window.confirm("Are you sure you want to delete this image?"))
+      return;
+
     this.deletedImageId = id;
 
     this.apiService.deleteBioImage(id)

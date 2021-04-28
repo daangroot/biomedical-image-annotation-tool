@@ -89,6 +89,9 @@ export class MaskManagerComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
+    if (!window.confirm("Are you sure you want to delete this mask?"))
+      return;
+
     this.deletedMaskId = id;
 
     this.maskManagerService.setSelectedMask(null);
