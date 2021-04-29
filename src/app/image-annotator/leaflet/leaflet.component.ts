@@ -25,6 +25,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private swMax!: L.PointExpression;
   private neMax!: L.PointExpression;
   private readonly tileSize: number = 128;
+  private maxNativeZoom!: number;
+
   showBaseMap: boolean = false;
   private selectedMaskId: string | null = null;
 
@@ -50,6 +52,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const offset: number = this.tileSize * 5;
     this.swMax = [this.sw[0] - offset, this.sw[1] + offset];
     this.neMax = [this.ne[0] + offset, this.ne[1] - offset];
+
+    this.maxNativeZoom = this.leafletService.calcMaxNativeZoomLevel(this.bioImageInfo.width, this.bioImageInfo.height, this.tileSize);
   }
 
   ngAfterViewInit(): void {
@@ -68,10 +72,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private initBaseMap(): void {
     this.baseMap = this.createMap('leaflet-viewer-base', false);
-    this.baseMap.setView(this.maskMap.getCenter(), this.maskMap.getZoom());
-    this.baseMap.setMaxBounds(this.leafletService.toLatLngBounds(this.swMax, this.neMax, this.baseMap));
-
-    this.addTileLayer(this.baseMap, this.sw, this.ne);
+    this.addTileLayer(this.baseMap);
 
     this.maskMap.on('move', () =>
       this.baseMap.setView(this.maskMap.getCenter(), this.maskMap.getZoom())
@@ -86,9 +87,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private initMaskMap(): void {
     this.maskMap = this.createMap('leaflet-viewer-mask');
     this.maskMap.setView([0, 0], 0);
-    this.maskMap.setMaxBounds(this.leafletService.toLatLngBounds(this.swMax, this.neMax, this.maskMap));
+    this.maskMap.setMaxBounds(L.latLngBounds(this.toLatLng(this.swMax), this.toLatLng(this.neMax)));
 
-    this.addTileLayer(this.maskMap, this.sw, this.ne);
+    this.addTileLayer(this.maskMap);
 
     this.polygonLayer = L.layerGroup()
       .addTo(this.maskMap);
@@ -106,7 +107,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private createMap(htmlId: string, canInteract: boolean = true): L.Map {
     return L.map(htmlId, {
       crs: L.CRS.Simple,
-      maxZoom: this.leafletService.calcMaxZoomLevel(this.bioImageInfo.width, this.bioImageInfo.height, this.tileSize),
+      maxZoom: 18,
       zoomControl: false,
       dragging: canInteract,
       scrollWheelZoom: canInteract,
@@ -117,10 +118,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private addTileLayer(map: L.Map, sw: L.PointExpression, ne: L.PointExpression) {
+  private addTileLayer(map: L.Map) {
     L.tileLayer(`${environment.apiUrl}/api/images/${this.bioImageInfo.id}/tiles/{z}/{y}/{x}`, {
-      bounds: this.leafletService.toLatLngBounds(sw, ne, map),
-      tileSize: this.tileSize
+      bounds: L.latLngBounds(this.toLatLng(this.sw), this.toLatLng(this.ne)),
+      tileSize: this.tileSize,
+      maxNativeZoom: this.maxNativeZoom
     }).addTo(map);
   }
 
@@ -176,10 +178,21 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private addPolygons(polygons: Polygon[]): void {
     polygons.forEach(polygon =>
       polygon.forEach((ring, index) => {
-        const color: string = index > 0 ? 'red' : 'blue';
-        const polygonMarker: L.Polygon = this.leafletService.createPolygonMarker(ring, color, this.maskMap);
-        polygonMarker.addTo(this.polygonLayer);
+        const color = index > 0 ? 'red' : 'blue';
+        L.polygon(this.toLatLngs(ring), {
+          color: color
+        }).addTo(this.polygonLayer);
       })
+    )
+  }
+
+  private toLatLng(point: L.PointExpression): L.LatLng {
+    return this.maskMap.unproject(point, this.maxNativeZoom);
+  }
+
+  private toLatLngs(points: L.PointExpression[]): L.LatLng[] {
+    return points.map(point =>
+      this.toLatLng(point)
     )
   }
 }

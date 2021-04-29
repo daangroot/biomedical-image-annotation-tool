@@ -1,1 +1,1 @@
-export type Polygon = Array<Array<L.PointTuple>>;
+export type Polygon = L.PointTuple[][];

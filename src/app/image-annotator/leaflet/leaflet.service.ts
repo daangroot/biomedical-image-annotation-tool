@@ -9,7 +9,7 @@ export class LeafletService {
 
   constructor() { }
 
-  calcMaxZoomLevel(imageWidth: number, imageHeight: number, tileSize: number): number {
+  calcMaxNativeZoomLevel(imageWidth: number, imageHeight: number, tileSize: number): number {
     let val: number = Math.max(imageWidth, imageHeight);
     let level: number = 0;
     while (val > tileSize) {
@@ -48,23 +48,5 @@ export class LeafletService {
     return new Control({
       position: position
     })
-  }
-
-  toLatLngBounds(sw: L.PointExpression, ne: L.PointExpression, map: L.Map): L.LatLngBounds {
-    const swLatLng: L.LatLng = this.toLatLng(sw, map);
-    const neLatLng: L.LatLng = this.toLatLng(ne, map);
-    return L.latLngBounds(swLatLng, neLatLng);
-  }
-
-  toLatLng(point: L.PointExpression, map: L.Map): L.LatLng {
-    return map.unproject(point, map.getMaxZoom());
-  }
-
-  createPolygonMarker(ring: Array<L.PointTuple>, color: string, map: L.Map) {
-    const latLngs: Array<L.LatLng> = [];
-    ring.forEach(point =>
-      latLngs.push(this.toLatLng(point, map))
-    )
-    return L.polygon(latLngs, { color: color });
   }
 }
