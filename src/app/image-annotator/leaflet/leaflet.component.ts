@@ -24,7 +24,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private ne!: L.PointExpression;
   private swMax!: L.PointExpression;
   private neMax!: L.PointExpression;
-  private readonly tileSize: number = 256;
+  private readonly tileSize: number = 128;
   showBaseMap: boolean = false;
   private selectedMaskId: string | null = null;
 
