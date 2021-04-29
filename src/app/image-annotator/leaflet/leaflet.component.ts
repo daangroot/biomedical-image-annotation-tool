@@ -107,7 +107,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private createMap(htmlId: string, canInteract: boolean = true): L.Map {
     return L.map(htmlId, {
       crs: L.CRS.Simple,
-      maxZoom: 18,
       zoomControl: false,
       dragging: canInteract,
       scrollWheelZoom: canInteract,
