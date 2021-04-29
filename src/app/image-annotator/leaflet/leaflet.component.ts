@@ -67,7 +67,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private initBaseMap(): void {
-    this.baseMap = this.createMap('leaflet-viewer-base', false, false);
+    this.baseMap = this.createMap('leaflet-viewer-base', false);
     this.baseMap.setView(this.maskMap.getCenter(), this.maskMap.getZoom());
     this.baseMap.setMaxBounds(this.leafletService.toLatLngBounds(this.swMax, this.neMax, this.baseMap));
 
@@ -103,13 +103,17 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskMap.invalidateSize();
   }
 
-  private createMap(htmlId: string, canDrag: boolean = true, canScroll: boolean = true): L.Map {
+  private createMap(htmlId: string, canInteract: boolean = true): L.Map {
     return L.map(htmlId, {
       crs: L.CRS.Simple,
       maxZoom: this.leafletService.calcMaxZoomLevel(this.bioImageInfo.width, this.bioImageInfo.height, this.tileSize),
       zoomControl: false,
-      dragging: canDrag,
-      scrollWheelZoom: canScroll
+      dragging: canInteract,
+      scrollWheelZoom: canInteract,
+      doubleClickZoom: canInteract,
+      touchZoom: canInteract,
+      boxZoom: canInteract,
+      keyboard: canInteract
     });
   }
 
