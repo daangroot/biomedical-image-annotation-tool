@@ -1,11 +1,11 @@
-import { Input, Component, OnChanges, OnInit, SimpleChanges, AfterViewInit } from '@angular/core';
+import { Input, Component, OnInit, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
 
 import { environment } from '../../../environments/environment';
 import { HeaderService } from '../../header/header.service';
 import { ApiService } from '../../services/api.service';
+import { GeoJson } from '../../types/geojson.type';
 import { ImageInfo } from '../../types/image-info.type';
-import { Polygon } from '../../types/polygon.type';
 import { MaskManagerService } from '../mask-manager/mask-manager.service';
 import { LeafletService } from './leaflet.service';
 
@@ -19,11 +19,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   leafletContainerCssHeight!: string;
   private baseMap!: L.Map;
   private maskMap!: L.Map;
-  private polygonLayer!: L.LayerGroup;
-  private sw!: L.PointExpression;
-  private ne!: L.PointExpression;
-  private swMax!: L.PointExpression;
-  private neMax!: L.PointExpression;
+  private geoJsonLayer!: L.GeoJSON;
+  private sw!: L.PointTuple;
+  private ne!: L.PointTuple;
+  private swMax!: L.PointTuple;
+  private neMax!: L.PointTuple;
   private readonly tileSize: number = 128;
   private maxNativeZoom!: number;
 
@@ -41,7 +41,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskManagerService.maskSelected$.subscribe(
       id => {
         this.selectedMaskId = id;
-        this.updatePolygons();
+        this.updateGeoJson();
       }
     )
 
@@ -91,8 +91,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.addTileLayer(this.maskMap);
 
-    this.polygonLayer = L.layerGroup()
-      .addTo(this.maskMap);
+    this.geoJsonLayer = L.geoJSON().addTo(this.maskMap);
 
     this.addMaskMapControls();
   }
@@ -131,7 +130,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }).addTo(this.maskMap);
 
     L.control.layers(undefined, {
-      'Segments': this.polygonLayer
+      'Segments': this.geoJsonLayer
     }).addTo(this.maskMap);
 
     const splitScreenControl = this.createSplitScreenControl();
@@ -163,35 +162,51 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     return this.leafletService.createButtonControl(button, "topleft");
   }
 
-  private updatePolygons(): void {
-    this.polygonLayer.clearLayers();
+  private updateGeoJson(): void {
+    this.geoJsonLayer.clearLayers();
 
     if (this.selectedMaskId !== null) {
-      this.apiService.fetchPolygons(this.bioImageInfo.id, this.selectedMaskId!).subscribe(
-        polygons => this.addPolygons(polygons),
+      this.apiService.fetchGeoJson(this.bioImageInfo.id, this.selectedMaskId!).subscribe(
+        geoJsonPolygons => {
+          const mapCoordsPolygons: any = geoJsonPolygons.map(polygon =>
+            this.geoJsonToMapCoords(polygon)
+          )
+          this.geoJsonLayer.addData(mapCoordsPolygons);
+        },
         error => window.alert('Failed to retrieve polygons from server!')
       )
     }
   }
 
-  private addPolygons(polygons: Polygon[]): void {
-    polygons.forEach(polygon =>
-      polygon.forEach((ring, index) => {
-        const color = index > 0 ? 'red' : 'blue';
-        L.polygon(this.toLatLngs(ring), {
-          color: color
-        }).addTo(this.polygonLayer);
-      })
-    )
-  }
-
-  private toLatLng(point: L.PointExpression): L.LatLng {
+  private toLatLng(point: L.PointTuple): L.LatLng {
     return this.maskMap.unproject(point, this.maxNativeZoom);
   }
 
-  private toLatLngs(points: L.PointExpression[]): L.LatLng[] {
-    return points.map(point =>
-      this.toLatLng(point)
-    )
+  private toMapCoords(points: L.PointTuple[]): L.PointTuple[] {
+    return points.map(point => {
+      const latLng = this.toLatLng(point);
+      return [latLng.lng, latLng.lat];
+    })
+  }
+
+  private geoJsonToMapCoords(geoJson: GeoJson): GeoJson {
+    let newCoords: any = [];
+    switch (geoJson.type) {
+      case 'Polygon':
+        const rings: L.PointTuple[][] = geoJson.coordinates as L.PointTuple[][];
+        newCoords = rings.map(ring =>
+          this.toMapCoords(ring)
+        )
+        break;
+      case 'MultiPolygon':
+        const polygons: L.PointTuple[][][] = geoJson.coordinates as L.PointTuple[][][];
+        newCoords = polygons.map(polygon =>
+          polygon.map(ring =>
+            this.toMapCoords(ring)
+        ))
+        break;
+    }
+    geoJson.coordinates = newCoords;
+    return geoJson;
   }
 }
