@@ -59,18 +59,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.initMaskMap();
   }
 
-  toggleBaseMap(): void {
-    this.showBaseMap = !this.showBaseMap;
-    if (this.showBaseMap) {
-      this.initBaseMap();
-    } else {
-      this.destroyBaseMap();
-    }
-    setTimeout(() => this.fitContainer(), 100);
-  }
-
   private initBaseMap(): void {
-    this.baseMap = this.createMap('leaflet-viewer-base', false);
+    this.baseMap = this.leafletService.createMap('leaflet-viewer-base', false);
     this.addTileLayer(this.baseMap);
 
     this.maskMap.on('move', () =>
@@ -83,8 +73,18 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskMap.off('move');
   }
 
+  toggleBaseMap(): void {
+    this.showBaseMap = !this.showBaseMap;
+    if (this.showBaseMap) {
+      this.initBaseMap();
+    } else {
+      this.destroyBaseMap();
+    }
+    setTimeout(() => this.fitContainer(), 100);
+  }
+
   private initMaskMap(): void {
-    this.maskMap = this.createMap('leaflet-viewer-mask');
+    this.maskMap = this.leafletService.createMap('leaflet-viewer-mask');
     this.maskMap.setView([0, 0], 0);
     this.maskMap.setMaxBounds(L.latLngBounds(this.toLatLng(this.swMax), this.toLatLng(this.neMax)));
 
@@ -105,19 +105,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskMap.invalidateSize();
   }
 
-  private createMap(htmlId: string, canInteract: boolean = true): L.Map {
-    return L.map(htmlId, {
-      crs: L.CRS.Simple,
-      zoomControl: false,
-      dragging: canInteract,
-      scrollWheelZoom: canInteract,
-      doubleClickZoom: canInteract,
-      touchZoom: canInteract,
-      boxZoom: canInteract,
-      keyboard: canInteract
-    });
-  }
-
   private addTileLayer(map: L.Map) {
     L.tileLayer(`${environment.apiUrl}/api/images/${this.bioImageInfo.id}/tiles/{z}/{y}/{x}`, {
       bounds: L.latLngBounds(this.toLatLng(this.sw), this.toLatLng(this.ne)),
@@ -129,10 +116,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private addMaskMapControls(): void {
     L.control.zoom({
       position: 'bottomright'
-    }).addTo(this.maskMap);
-
-    L.control.layers(undefined, {
-      'Segments': this.geoJsonLayer
     }).addTo(this.maskMap);
 
     const splitScreenControl = this.createSplitScreenControl();
@@ -151,7 +134,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     button.setAttribute('title', 'Split screen');
     button.style.backgroundImage = 'url("/assets/swap_horiz.png")';
     button.style.backgroundSize = '24px 24px';
-    return this.leafletService.createButtonControl(button, "topleft");
+    return this.leafletService.createButtonControl(button, 'topleft');
   }
 
   private createMaskControl(): L.Control {
@@ -161,7 +144,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     button.setAttribute('title', 'Set mask');
     button.style.backgroundImage = 'url("/assets/layers.png")';
     button.style.backgroundSize = '24px 24px';
-    return this.leafletService.createButtonControl(button, "topleft");
+    return this.leafletService.createButtonControl(button, 'topleft');
   }
 
   private updateGeoJson(): void {

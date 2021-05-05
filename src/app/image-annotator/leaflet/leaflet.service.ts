@@ -9,6 +9,19 @@ export class LeafletService {
 
   constructor() { }
 
+  createMap(htmlId: string, canInteract: boolean = true): L.Map {
+    return L.map(htmlId, {
+      crs: L.CRS.Simple,
+      zoomControl: false,
+      dragging: canInteract,
+      scrollWheelZoom: canInteract,
+      doubleClickZoom: canInteract,
+      touchZoom: canInteract,
+      boxZoom: canInteract,
+      keyboard: canInteract
+    });
+  }
+
   calcMaxNativeZoomLevel(imageWidth: number, imageHeight: number, tileSize: number): number {
     let val: number = Math.max(imageWidth, imageHeight);
     let level: number = 0;
