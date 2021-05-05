@@ -7,7 +7,7 @@ import { ApiService } from '../../services/api.service';
 import { ImageInfo } from '../../types/image-info.type';
 import { MaskManagerService } from '../mask-manager/mask-manager.service';
 import { LeafletService } from './leaflet.service';
-import { Feature } from 'geojson';
+import { Geometry, Feature } from 'geojson';
 
 @Component({
   selector: 'app-leaflet',
@@ -34,7 +34,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private maxNativeZoom!: number;
   private maskEditModeEnabled: boolean = false;
   private maskGradeModeEnabled: boolean = false;
-  private features: Feature[] = [];
+  private features: Map<number, Feature<Geometry, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
 
   constructor(
@@ -98,7 +98,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.geoJsonLayer = L.geoJSON(undefined, {
       coordsToLatLng: (coords) => this.toLatLng(coords as L.PointTuple),
       onEachFeature: (feature, layer) => {
-        const fid = (feature.properties as any).FID;
+        const fid = feature.properties.FID;
         this.featureLayers.set(fid, layer);
       }
     }).addTo(this.maskMap);
@@ -192,7 +192,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     return this.leafletService.createButtonControl(button, 'topleft');
   }
 
-  private updateControls() {
+  private updateControls(): void {
     this.maskControl.remove();
     this.editMaskControl.remove();
     this.gradeMaskControl.remove();
@@ -222,12 +222,16 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private updateGeoJson(maskId: string | null): void {
+    this.features = new Map();
+    this.featureLayers = new Map();
     this.geoJsonLayer.clearLayers();
 
     if (maskId !== null) {
       this.apiService.fetchGeoJson(this.bioImageInfo.id, maskId!).subscribe(
         features => {
-          this.features = features;
+          features.forEach(feature =>
+            this.features.set(feature.properties.FID, feature)
+          );
           this.geoJsonLayer.addData(features as any);
         },
         error => window.alert('Failed to retrieve polygons from server!')
@@ -235,16 +239,58 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private startMaskEditMode() {
+  private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
+    this.featureLayers.get(fid)?.remove();
+    this.geoJsonLayer.addData(this.features.get(fid)!);
+
+    const newLayer = this.featureLayers.get(fid)!;
+    newLayer.bindPopup(this.createEditMaskPopup(fid));
+
+    if (openPopup) {
+      newLayer.openPopup();
+    }
+  }
+
+  private removeInnerPolygons(fid: number): void {
+    const feature = this.features.get(fid)!;
+    
+    const coords = (feature.geometry as any).coordinates as L.PointTuple[][];
+    (feature.geometry as any).coordinates = [coords[0]];
+
+    this.updateFeatureLayer(fid, true);
+  }
+
+  private startMaskEditMode(): void {
     if (this.maskEditModeEnabled) {
       return
     }
 
     this.maskEditModeEnabled = true;
     this.updateControls();
+
+    this.featureLayers.forEach((layer, fid) => 
+      layer.bindPopup(this.createEditMaskPopup(fid))
+    )
   }
 
-  private finishMaskEditMode() {
+  private createEditMaskPopup(fid: number): HTMLElement {
+    const feature = this.features.get(fid)!;
+    const coords = (feature.geometry as any).coordinates as L.PointTuple[][];
+    const hasInnerPolygon = coords.length > 1;
+
+    const popup: HTMLElement = document.createElement('div');
+    if (hasInnerPolygon) {
+      const button: HTMLButtonElement = document.createElement('button');
+      button.setAttribute('class', 'btn btn-primary');
+      button.innerHTML = 'Delete inner polygon(s)'
+      button.onclick = () => this.removeInnerPolygons(fid)
+      popup.appendChild(button)
+    }
+    
+    return popup;
+  }
+
+  private finishMaskEditMode(): void {
     if (!this.maskEditModeEnabled) {
       return
     }
@@ -253,7 +299,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.updateControls();
   }
 
-  private startMaskGradeMode() {
+  private startMaskGradeMode(): void {
     if (this.maskGradeModeEnabled) {
       return
     }
@@ -262,7 +308,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.updateControls();
   }
 
-  private finishMaskGradeMode() {
+  private finishMaskGradeMode(): void {
     if (!this.maskGradeModeEnabled) {
       return
     }

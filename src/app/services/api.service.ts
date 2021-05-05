@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Feature } from 'geojson';
+import { Geometry, Feature } from 'geojson';
 import { ImageInfo } from '../types/image-info.type';
 
 
@@ -40,8 +40,8 @@ export class ApiService {
     return this.http.get<ImageInfo[]>(`${this.imagesDataUrl}/${bioImageId}/masks/info`);
   }
 
-  fetchGeoJson(bioImageId: string, maskId: string): Observable<Feature[]> {
-    return this.http.get<Feature[]>(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/geojson`);
+  fetchGeoJson(bioImageId: string, maskId: string): Observable<Feature<Geometry, any>[]> {
+    return this.http.get<Feature<Geometry, any>[]>(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/geojson`);
   }
 
   postMask(bioImageId: string, file: File): Observable<any> {
