@@ -7,6 +7,7 @@ import { ApiService } from '../../services/api.service';
 import { ImageInfo } from '../../types/image-info.type';
 import { MaskManagerService } from '../mask-manager/mask-manager.service';
 import { LeafletService } from './leaflet.service';
+import { Feature } from 'geojson';
 
 @Component({
   selector: 'app-leaflet',
@@ -33,6 +34,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private maxNativeZoom!: number;
   private maskEditModeEnabled: boolean = false;
   private maskGradeModeEnabled: boolean = false;
+  private features: Feature[] = [];
+  private featureLayers: Map<number, L.Layer> = new Map();
 
   constructor(
     private apiService: ApiService,
@@ -94,7 +97,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.geoJsonLayer = L.geoJSON(undefined, {
       coordsToLatLng: (coords) => this.toLatLng(coords as L.PointTuple),
-      onEachFeature: this.onEachFeature
+      onEachFeature: (feature, layer) => {
+        const fid = (feature.properties as any).FID;
+        this.featureLayers.set(fid, layer);
+      }
     }).addTo(this.maskMap);
 
     this.addMaskMapControls();
@@ -220,7 +226,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     if (maskId !== null) {
       this.apiService.fetchGeoJson(this.bioImageInfo.id, maskId!).subscribe(
-        geoJsonPolygons => this.geoJsonLayer.addData(geoJsonPolygons as any),
+        features => {
+          this.features = features;
+          this.geoJsonLayer.addData(features as any);
+        },
         error => window.alert('Failed to retrieve polygons from server!')
       )
     }
@@ -264,9 +273,5 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private toLatLng(point: L.PointTuple): L.LatLng {
     return this.maskMap.unproject(point, this.maxNativeZoom);
-  }
-
-  private onEachFeature(feature: any, layer: any) {
-    layer.bindPopup(feature.type);
   }
 }
