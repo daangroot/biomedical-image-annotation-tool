@@ -26,6 +26,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private editMaskControl!: L.Control;
   private gradeMaskControl!: L.Control;
   private finishActionControl!: L.Control;
+  private featureUndoControl!: L.Control;
   private sw!: L.PointTuple;
   private ne!: L.PointTuple;
   private swMax!: L.PointTuple;
@@ -36,6 +37,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private maskGradeModeEnabled: boolean = false;
   private features: Map<number, Feature<Geometry, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
+  private featureUndoStack: Feature<Geometry, any>[] = [];
 
   constructor(
     private apiService: ApiService,
@@ -135,6 +137,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.editMaskControl = this.createEditMaskControl();
     this.gradeMaskControl = this.createGradeMaskControl();
     this.finishActionControl = this.createActionOperationControl();
+    this.featureUndoControl = this.createFeatureUndoControl();
 
     const imageNameControl = this.leafletService.createTextControl(this.bioImageInfo.originalName, 'bottomleft');
     imageNameControl.addTo(this.maskMap);
@@ -175,6 +178,15 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     button.style.backgroundImage = 'url("/assets/grade.png")';
     button.style.backgroundSize = '24px 24px';
     return this.leafletService.createButtonControl(button, 'topleft');
+  }
+
+  private createFeatureUndoControl(): L.Control {
+    const button: HTMLElement = L.DomUtil.create('a');
+    button.onclick = () => this.undoFeatureEdit();
+    button.setAttribute('title', 'Undo');
+    button.style.backgroundImage = 'url("/assets/undo.png")';
+    button.style.backgroundSize = '24px 24px';
+    return this.leafletService.createButtonControl(button, 'topright');
   }
 
   private createActionOperationControl(): L.Control {
@@ -253,11 +265,50 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private removeInnerPolygons(fid: number): void {
     const feature = this.features.get(fid)!;
-    
-    const coords = (feature.geometry as any).coordinates as L.PointTuple[][];
-    (feature.geometry as any).coordinates = [coords[0]];
+    this.addToUndoStack(feature);
+
+    if (feature.geometry.type === 'Polygon') {
+      feature.geometry.coordinates = [feature.geometry.coordinates[0]];
+    } else if (feature.geometry.type === 'MultiPolygon') {
+      feature.geometry.coordinates = [feature.geometry.coordinates[0][0]] as any;
+      feature.geometry.type = 'Polygon' as any;
+    }
 
     this.updateFeatureLayer(fid, true);
+  }
+
+  private addToUndoStack(feature: Feature<Geometry, any>): void {
+    const copy = JSON.parse(JSON.stringify(feature));
+    this.featureUndoStack.push(copy);
+
+    if (this.featureUndoStack.length === 1) {
+      this.featureUndoControl.addTo(this.maskMap);
+    }
+  }
+
+  private undoFeatureEdit(): void {
+    if (this.featureUndoStack.length === 0) {
+      return;
+    }
+
+    const prevFeature = this.featureUndoStack.pop()!;
+    const fid = prevFeature.properties.FID as number;
+    this.features.set(fid, prevFeature);
+    this.updateFeatureLayer(fid);
+
+    const layer = this.featureLayers.get(fid) as any;
+    const bounds = layer.getBounds() as L.LatLngBounds;
+    this.maskMap.panTo(bounds.getCenter())
+    layer.setStyle({
+      color: 'yellow'
+    })
+    setTimeout(() => {
+      this.geoJsonLayer.resetStyle(layer);
+    }, 1000)
+
+    if (this.featureUndoStack.length === 0) {
+      this.featureUndoControl.remove();
+    }
   }
 
   private startMaskEditMode(): void {
