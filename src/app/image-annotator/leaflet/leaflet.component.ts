@@ -23,9 +23,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private maskMap!: L.Map;
   private geoJsonLayer!: L.GeoJSON;
   private maskControl!: L.Control;
-  private editMaskControl!: L.Control;
-  private gradeMaskControl!: L.Control;
-  private finishActionControl!: L.Control;
   private featureUndoControl!: L.Control;
   private sw!: L.PointTuple;
   private ne!: L.PointTuple;
@@ -33,8 +30,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private neMax!: L.PointTuple;
   private readonly tileSize: number = 128;
   private maxNativeZoom!: number;
-  private maskEditModeEnabled: boolean = false;
-  private maskGradeModeEnabled: boolean = false;
   private features: Map<number, Feature<Geometry, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
   private featureUndoStack: Feature<Geometry, any>[] = [];
@@ -102,6 +97,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       onEachFeature: (feature, layer) => {
         const fid = feature.properties.FID;
         this.featureLayers.set(fid, layer);
+        layer.bindPopup(this.createFeaturePopup(fid));
       }
     }).addTo(this.maskMap);
 
@@ -134,9 +130,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskControl = this.createMaskControl();
     this.maskControl.addTo(this.maskMap);
 
-    this.editMaskControl = this.createEditMaskControl();
-    this.gradeMaskControl = this.createGradeMaskControl();
-    this.finishActionControl = this.createActionOperationControl();
     this.featureUndoControl = this.createFeatureUndoControl();
 
     const imageNameControl = this.leafletService.createTextControl(this.bioImageInfo.originalName, 'bottomleft');
@@ -144,7 +137,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createSplitScreenControl(): L.Control {
-    const button: HTMLElement = L.DomUtil.create('a');
+    const button: HTMLElement = document.createElement('a');
     button.onclick = () => this.toggleBaseMap();
     button.setAttribute('title', 'Split screen');
     button.style.backgroundImage = 'url("/assets/swap_horiz.png")';
@@ -153,7 +146,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createMaskControl(): L.Control {
-    const button: HTMLElement = L.DomUtil.create('a');
+    const button: HTMLElement = document.createElement('a');
     button.setAttribute('data-bs-toggle', 'offcanvas');
     button.setAttribute('href', '#mask-manager-offcanvas');
     button.setAttribute('title', 'Set mask');
@@ -162,26 +155,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     return this.leafletService.createButtonControl(button, 'topleft');
   }
 
-  private createEditMaskControl(): L.Control {
-    const button: HTMLElement = L.DomUtil.create('a');
-    button.onclick = () => this.startMaskEditMode();
-    button.setAttribute('title', 'Edit');
-    button.style.backgroundImage = 'url("/assets/edit.png")';
-    button.style.backgroundSize = '24px 24px';
-    return this.leafletService.createButtonControl(button, 'topleft');
-  }
-
-  private createGradeMaskControl(): L.Control {
-    const button: HTMLElement = L.DomUtil.create('a');
-    button.onclick = () => this.startMaskGradeMode();
-    button.setAttribute('title', 'Grade');
-    button.style.backgroundImage = 'url("/assets/grade.png")';
-    button.style.backgroundSize = '24px 24px';
-    return this.leafletService.createButtonControl(button, 'topleft');
-  }
-
   private createFeatureUndoControl(): L.Control {
-    const button: HTMLElement = L.DomUtil.create('a');
+    const button: HTMLElement = document.createElement('a');
     button.onclick = () => this.undoFeatureEdit();
     button.setAttribute('title', 'Undo');
     button.style.backgroundImage = 'url("/assets/undo.png")';
@@ -189,48 +164,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     return this.leafletService.createButtonControl(button, 'topright');
   }
 
-  private createActionOperationControl(): L.Control {
-    const button: HTMLElement = L.DomUtil.create('a');
-    button.onclick = () => {
-      if (this.maskEditModeEnabled) {
-        this.finishMaskEditMode();
-      } else {
-        this.finishMaskGradeMode();
-      }
-    }
-    button.setAttribute('title', 'Finish');
-    button.style.backgroundImage = 'url("/assets/done.png")';
-    button.style.backgroundSize = '24px 24px';
-    return this.leafletService.createButtonControl(button, 'topleft');
-  }
-
-  private updateControls(): void {
-    this.maskControl.remove();
-    this.editMaskControl.remove();
-    this.gradeMaskControl.remove();
-    this.finishActionControl.remove();
-
-    if (!this.maskEditModeEnabled && !this.maskGradeModeEnabled) {
-      this.maskControl.addTo(this.maskMap);
-    }
-
-    if (this.selectedMaskId !== null && !this.maskGradeModeEnabled) {
-      this.editMaskControl.addTo(this.maskMap);
-    }
-
-    if (this.selectedMaskId !== null && !this.maskEditModeEnabled) {
-      this.gradeMaskControl.addTo(this.maskMap);
-    }
-
-    if (this.maskEditModeEnabled || this.maskGradeModeEnabled) {
-      this.finishActionControl.addTo(this.maskMap);
-    }
-  }
-
   private handleMaskChange(maskId: string | null): void {
     this.selectedMaskId = maskId;
     this.updateGeoJson(maskId);
-    this.updateControls();
   }
 
   private updateGeoJson(maskId: string | null): void {
@@ -255,11 +191,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureLayers.get(fid)?.remove();
     this.geoJsonLayer.addData(this.features.get(fid)!);
 
-    const newLayer = this.featureLayers.get(fid)!;
-    newLayer.bindPopup(this.createEditMaskPopup(fid));
-
     if (openPopup) {
-      newLayer.openPopup();
+      this.featureLayers.get(fid)!.openPopup();
     }
   }
 
@@ -275,6 +208,35 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     this.updateFeatureLayer(fid, true);
+  }
+
+  private createFeaturePopup(fid: number): HTMLElement {
+    const popup: HTMLElement = document.createElement('div');
+    popup.appendChild(this.createFeatureEditPopupHtml(fid));
+    popup.appendChild(this.createFeatureGradePopupHtml(fid));
+    return popup;
+  }
+
+  private createFeatureEditPopupHtml(fid: number): HTMLElement {
+    const feature = this.features.get(fid)!;
+    const coords = (feature.geometry as any).coordinates as L.PointTuple[][];
+    const hasInnerPolygon = coords.length > 1;
+
+    const div: HTMLElement = document.createElement('div');
+    if (hasInnerPolygon) {
+      const button: HTMLButtonElement = document.createElement('button');
+      button.setAttribute('class', 'btn btn-primary');
+      button.innerHTML = 'Delete inner polygon(s)';
+      button.onclick = () => this.removeInnerPolygons(fid);
+      div.appendChild(button);
+    }
+
+    return div;
+  }
+
+  private createFeatureGradePopupHtml(fid: number): HTMLElement {
+    const div: HTMLElement = document.createElement('div');
+    return div;
   }
 
   private addToUndoStack(feature: Feature<Geometry, any>): void {
@@ -304,68 +266,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     })
     setTimeout(() => {
       this.geoJsonLayer.resetStyle(layer);
-    }, 1000)
+    }, 1500)
 
     if (this.featureUndoStack.length === 0) {
       this.featureUndoControl.remove();
     }
-  }
-
-  private startMaskEditMode(): void {
-    if (this.maskEditModeEnabled) {
-      return
-    }
-
-    this.maskEditModeEnabled = true;
-    this.updateControls();
-
-    this.featureLayers.forEach((layer, fid) => 
-      layer.bindPopup(this.createEditMaskPopup(fid))
-    )
-  }
-
-  private createEditMaskPopup(fid: number): HTMLElement {
-    const feature = this.features.get(fid)!;
-    const coords = (feature.geometry as any).coordinates as L.PointTuple[][];
-    const hasInnerPolygon = coords.length > 1;
-
-    const popup: HTMLElement = document.createElement('div');
-    if (hasInnerPolygon) {
-      const button: HTMLButtonElement = document.createElement('button');
-      button.setAttribute('class', 'btn btn-primary');
-      button.innerHTML = 'Delete inner polygon(s)'
-      button.onclick = () => this.removeInnerPolygons(fid)
-      popup.appendChild(button)
-    }
-    
-    return popup;
-  }
-
-  private finishMaskEditMode(): void {
-    if (!this.maskEditModeEnabled) {
-      return
-    }
-
-    this.maskEditModeEnabled = false;
-    this.updateControls();
-  }
-
-  private startMaskGradeMode(): void {
-    if (this.maskGradeModeEnabled) {
-      return
-    }
-
-    this.maskGradeModeEnabled = true;
-    this.updateControls();
-  }
-
-  private finishMaskGradeMode(): void {
-    if (!this.maskGradeModeEnabled) {
-      return
-    }
-
-    this.maskGradeModeEnabled = false;
-    this.updateControls();
   }
 
   private toLatLng(point: L.PointTuple): L.LatLng {
