@@ -139,8 +139,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private createFeaturePopup(fid: number): HTMLElement {
     const popup = L.DomUtil.create('div');
-    popup.appendChild(this.createFeatureEditPopupHtml(fid));
     popup.appendChild(this.createFeatureGradePopupHtml(fid));
+    popup.appendChild(this.createFeatureEditPopupHtml(fid));
     return popup;
   }
 
@@ -182,8 +182,36 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createFeatureGradePopupHtml(fid: number): HTMLElement {
-    const div: HTMLElement = document.createElement('div');
-    return div;
+    const feature = this.features.get(fid)!;
+    const container: HTMLElement = document.createElement('div');
+
+    const gradingContainer = L.DomUtil.create('div', 'mb-1 container', container);
+
+    // True positives
+
+    const truePositiveContainer = L.DomUtil.create('div', 'form-check', gradingContainer);
+    const truePositive = L.DomUtil.create('input', 'form-check-input', truePositiveContainer) as HTMLInputElement;
+    truePositive.type = 'radio';
+    truePositive.name = `grading-radios-${fid}`;
+    truePositive.id = `grading-radios-truepositive-${fid}`;
+
+    const truePositiveLabel = L.DomUtil.create('label', 'form-check-label', truePositiveContainer) as HTMLLabelElement;
+    truePositiveLabel.innerHTML = 'True positive';
+    truePositiveLabel.htmlFor = truePositive.id;
+
+    // False positives
+
+    const falsePositiveContainer = L.DomUtil.create('div', 'form-check', gradingContainer);
+    const falsePositive = L.DomUtil.create('input', 'form-check-input', falsePositiveContainer) as HTMLInputElement;
+    falsePositive.type = 'radio';
+    falsePositive.name = `grading-radios-${fid}`;
+    falsePositive.id = `grading-radios-falsepositive-${fid}`;
+
+    const falsePositiveLabel = L.DomUtil.create('label', 'form-check-label', falsePositiveContainer) as HTMLLabelElement;
+    falsePositive.innerHTML = 'False positive';
+    falsePositiveLabel.htmlFor = falsePositive.id;
+
+    return container;
   }
 
   private initControls(): void {
