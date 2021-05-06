@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-
 import * as L from 'leaflet';
+import { Feature, Geometry } from 'geojson';
 
 @Injectable({
   providedIn: 'root'
@@ -32,6 +32,17 @@ export class LeafletService {
     return level;
   }
 
+  createGeoJsonFeature(coords: L.PointTuple[]): Feature<Geometry, any> {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [coords]
+      }
+    };
+  }
+
   createTextControl(text: string, position: L.ControlPosition): L.Control {
     const Control = L.Control.extend({
       onAdd(map: L.Map) {
@@ -61,5 +72,66 @@ export class LeafletService {
     return new Control({
       position: position
     })
+  }
+
+  createSplitScreenControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Split screen');
+    button.style.backgroundImage = 'url("/assets/swap_horiz.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createMaskControl(): L.Control {
+    const button = L.DomUtil.create('a');
+    button.setAttribute('data-bs-toggle', 'offcanvas');
+    button.setAttribute('href', '#mask-manager-offcanvas');
+    button.setAttribute('title', 'Set mask');
+    button.style.backgroundImage = 'url("/assets/layers.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createDrawFeatureControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Draw polygon');
+    button.style.backgroundImage = 'url("/assets/polygon.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createCancelDrawFeatureControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Cancel drawing polygon');
+    button.style.backgroundImage = 'url("/assets/close.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createRemoveAllInnerPolygonsControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Remove all inner polygons');
+    button.style.backgroundImage = 'url("/assets/delete_inner_polygons.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createFeatureEditUndoControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Undo');
+    button.style.backgroundImage = 'url("/assets/undo.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topright');
   }
 }
