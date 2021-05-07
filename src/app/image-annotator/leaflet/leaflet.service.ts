@@ -111,7 +111,27 @@ export class LeafletService {
   createCancelDrawFeatureControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Cancel drawing polygon');
+    button.setAttribute('title', 'Cancel polygon drawing');
+    button.style.backgroundImage = 'url("/assets/close.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createCutFeatureControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Cut polygon');
+    button.style.backgroundImage = 'url("/assets/cut.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createCancelCutFeatureControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Cancel polygon cutting');
     button.style.backgroundImage = 'url("/assets/close.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
