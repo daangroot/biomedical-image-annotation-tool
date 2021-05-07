@@ -217,26 +217,25 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     // True positives
 
-    const truePositiveContainer = L.DomUtil.create('div', 'form-check', gradingContainer);
-    const truePositive = L.DomUtil.create('input', 'form-check-input', truePositiveContainer) as HTMLInputElement;
+    const truePositive = L.DomUtil.create('input', 'btn-check', gradingContainer) as HTMLInputElement;
     truePositive.type = 'radio';
     truePositive.name = `grading-radios-${fid}`;
     truePositive.id = `grading-radios-truepositive-${fid}`;
 
-    const truePositiveLabel = L.DomUtil.create('label', 'form-check-label', truePositiveContainer) as HTMLLabelElement;
+    const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-success', gradingContainer) as HTMLLabelElement;
     truePositiveLabel.innerHTML = 'True positive';
     truePositiveLabel.htmlFor = truePositive.id;
+    truePositiveLabel.style.marginInlineEnd = '1rem';
 
     // False positives
 
-    const falsePositiveContainer = L.DomUtil.create('div', 'form-check', gradingContainer);
-    const falsePositive = L.DomUtil.create('input', 'form-check-input', falsePositiveContainer) as HTMLInputElement;
+    const falsePositive = L.DomUtil.create('input', 'btn-check', gradingContainer) as HTMLInputElement;
     falsePositive.type = 'radio';
     falsePositive.name = `grading-radios-${fid}`;
     falsePositive.id = `grading-radios-falsepositive-${fid}`;
 
-    const falsePositiveLabel = L.DomUtil.create('label', 'form-check-label', falsePositiveContainer) as HTMLLabelElement;
-    falsePositive.innerHTML = 'False positive';
+    const falsePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-danger', gradingContainer) as HTMLLabelElement;
+    falsePositiveLabel.innerHTML = 'False positive';
     falsePositiveLabel.htmlFor = falsePositive.id;
 
     return container;
