@@ -213,10 +213,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createFeatureGradePopupHtml(fid: number): HTMLElement {
-    const feature = this.features.get(fid)!;
-    const container: HTMLElement = document.createElement('div');
-
-    const gradingContainer = L.DomUtil.create('div', 'mb-1 container', container);
+    const gradingContainer = L.DomUtil.create('div', 'mb-1 container');
 
     // True positives
 
@@ -224,6 +221,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     truePositive.type = 'radio';
     truePositive.name = `grading-radios-${fid}`;
     truePositive.id = `grading-radios-truepositive-${fid}`;
+    truePositive.onchange = () => this.setFeatureGrade(fid, truePositive.checked);
 
     const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-success', gradingContainer) as HTMLLabelElement;
     truePositiveLabel.innerHTML = 'True positive';
@@ -236,12 +234,18 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     falsePositive.type = 'radio';
     falsePositive.name = `grading-radios-${fid}`;
     falsePositive.id = `grading-radios-falsepositive-${fid}`;
+    falsePositive.onchange = () => this.setFeatureGrade(fid, truePositive.checked);
 
     const falsePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-danger', gradingContainer) as HTMLLabelElement;
     falsePositiveLabel.innerHTML = 'False positive';
     falsePositiveLabel.htmlFor = falsePositive.id;
 
-    return container;
+    return gradingContainer;
+  }
+
+  private setFeatureGrade(fid: number, truePositive: boolean): void {
+    const feature = this.features.get(fid)!;
+    feature.properties.grade = truePositive ? 'truePositive' : 'falsePositive';
   }
 
   private initControls(): void {
