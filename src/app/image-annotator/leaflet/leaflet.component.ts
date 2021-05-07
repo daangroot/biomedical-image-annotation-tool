@@ -138,7 +138,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createFeaturePopup(fid: number): HTMLElement {
-    const popup = L.DomUtil.create('div');
+    const popup = L.DomUtil.create('div', 'fid-' + fid);
     popup.appendChild(this.createFeatureGradePopupHtml(fid));
     popup.appendChild(this.createFeatureEditPopupHtml(fid));
     return popup;
@@ -174,7 +174,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     editButton.onclick = () => {
       //this.addToFeatureEditUndoStack([feature]);
       layer.pm.enable({
-        limitMarkersToCount: 10,
+        allowSelfIntersection: false,
+        limitMarkersToCount: 10
       })
     };
 
@@ -298,8 +299,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       return [point.x, point.y] as L.PointTuple;
     });
 
-    const feature = this.leafletService.createGeoJsonFeature(coords);
-    feature.properties.FID = this.features.size;
+    const feature = this.leafletService.createGeoJsonFeature(this.features.size, coords);
     this.geoJsonLayer.addData(feature);
 
     const prevFeature = JSON.parse(JSON.stringify(feature));

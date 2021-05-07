@@ -32,10 +32,12 @@ export class LeafletService {
     return level;
   }
 
-  createGeoJsonFeature(coords: L.PointTuple[]): Feature<Geometry, any> {
+  createGeoJsonFeature(fid: number, coords: L.PointTuple[]): Feature<Geometry, any> {
     return {
       type: 'Feature',
-      properties: {},
+      properties: {
+        FID: fid
+      },
       geometry: {
         type: 'Polygon',
         coordinates: [coords]
