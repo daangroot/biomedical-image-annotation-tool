@@ -32,15 +32,16 @@ export class LeafletService {
     return level;
   }
 
-  createGeoJsonFeature(fid: number, coords: L.PointTuple[]): Feature<Geometry, any> {
+  createGeoJsonFeature(fid: number, points: L.PointTuple[][] | L.PointTuple[][][]): Feature<Geometry, any> {
+    const isMultiPolygon = Array.isArray(points[0][0][0]);
     return {
       type: 'Feature',
       properties: {
         FID: fid
       },
       geometry: {
-        type: 'Polygon',
-        coordinates: [coords]
+        type: isMultiPolygon ? 'MultiPolygon' : 'Polygon',
+        coordinates: points as any
       }
     };
   }

@@ -97,18 +97,14 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.geoJsonLayer = L.geoJSON(undefined, {
       coordsToLatLng: (coords) => this.toLatLng(coords as L.PointTuple),
-      onEachFeature: (feature, layer) => {
-        const fid = feature.properties.FID;
-        this.features.set(fid, feature);
-        this.featureLayers.set(fid, layer);
-        layer.bindPopup(this.createFeaturePopup(fid));
-      },
+      onEachFeature: (feature, layer) => this.onEachFeature(feature, layer),
       // @ts-ignore
       snapIgnore: true
     }).addTo(this.maskMap);
 
     this.maskMap.on('pm:create', (result) => {
-      this.onPolygonCreated(result.layer);
+      this.onFeatureCreated(result.layer);
+      this.disableDrawMode();
     });
 
     this.initControls();
@@ -125,8 +121,27 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     return this.maskMap.unproject(point, this.maxNativeZoom);
   }
 
-  private toPoint(latLng: L.LatLng): L.Point {
-    return this.maskMap.project(latLng, this.maxNativeZoom);
+  private toPoint(latLng: L.LatLng): L.PointTuple {
+    const point = this.maskMap.project(latLng, this.maxNativeZoom);
+    return [point.x, point.y];
+  }
+
+  private polygonToPoints(polygon: L.LatLng[][]): L.PointTuple[][] {
+    return polygon.map(ring =>
+      ring.map(latLng =>
+        this.toPoint(latLng)
+      )
+    )
+  }
+
+  private multiPolygonToPoints(multiPolygon: L.LatLng[][][]): L.PointTuple[][][] {
+    return multiPolygon.map(polygon =>
+      polygon.map(ring =>
+        ring.map(latLng =>
+          this.toPoint(latLng)
+        )
+      )
+    )
   }
 
   private addTileLayer(map: L.Map) {
@@ -171,13 +186,24 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     const editContainer = L.DomUtil.create('div', 'mb-1', container);
     const editButton = L.DomUtil.create('button', 'btn btn-primary', editContainer);
+    const finishEditButton = L.DomUtil.create('button', 'btn btn-primary', editContainer);
+
     editButton.innerHTML = 'Edit';
     editButton.onclick = () => {
-      //this.addToFeatureEditUndoStack([feature]);
+      editButton.hidden = true;
+      finishEditButton.hidden = false;
       layer.pm.enable({
         allowSelfIntersection: false,
-        limitMarkersToCount: 10
+        limitMarkersToCount: 256
       })
+    };
+
+    finishEditButton.innerHTML = 'Finish edit';
+    finishEditButton.hidden = true
+    finishEditButton.onclick = () => {
+      editButton.hidden = false;
+      finishEditButton.hidden = true;
+      layer.pm.disable();
     };
 
     return container;
@@ -250,25 +276,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeAllInnerPolygonsControl.addTo(this.maskMap);
   }
 
-  private handleMaskChange(maskId: string | null): void {
-    this.selectedMaskId = maskId;
-    this.updateGeoJson(maskId);
-    this.updateTopLeftControls();
-  }
-
-  private updateGeoJson(maskId: string | null): void {
-    this.features = new Map();
-    this.featureLayers = new Map();
-    this.geoJsonLayer.clearLayers();
-
-    if (maskId !== null) {
-      this.apiService.fetchGeoJson(this.bioImageInfo.id, maskId!).subscribe(
-        features => this.geoJsonLayer.addData(features as any),
-        error => window.alert('Failed to retrieve polygons from server!')
-      )
-    }
-  }
-
   private enableDrawMode(): void {
     if (this.drawModeEnabled) {
       return;
@@ -290,24 +297,58 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.updateTopLeftControls();
   }
 
-  private onPolygonCreated(layer: L.Layer): void {
+  private handleMaskChange(maskId: string | null): void {
+    this.selectedMaskId = maskId;
+    this.updateGeoJson(maskId);
+    this.updateTopLeftControls();
+  }
+
+  private updateGeoJson(maskId: string | null): void {
+    this.features = new Map();
+    this.featureLayers = new Map();
+    this.geoJsonLayer.clearLayers();
+
+    if (maskId !== null) {
+      this.apiService.fetchGeoJson(this.bioImageInfo.id, maskId!).subscribe(
+        features => this.geoJsonLayer.addData(features as any),
+        error => window.alert('Failed to retrieve polygons from server!')
+      )
+    }
+  }
+
+  private onEachFeature(feature: Feature<Geometry, any>, layer: L.Layer): void {
+    const fid = feature.properties.FID;
+    this.features.set(fid, feature);
+    this.featureLayers.set(fid, layer);
+    layer.bindPopup(this.createFeaturePopup(fid));
+    layer.on('pm:update', result =>
+      this.onFeatureEdit(fid, result.layer)
+    )
+  }
+
+  private layerToFeature(fid: number, layer: L.Layer): Feature<Geometry, any> {
+    // @ts-ignore
+    const latLngs = layer._latlngs;
+    const isMultiPolygon = Array.isArray(latLngs[0][0]);
+    const points = isMultiPolygon ? this.multiPolygonToPoints(latLngs) : this.polygonToPoints(latLngs);
+    return this.leafletService.createGeoJsonFeature(fid, points);
+  }
+
+  private onFeatureCreated(layer: L.Layer): void {
     layer.remove();
 
-    // @ts-ignore
-    const latLngs: L.LatLng[] = layer._latlngs[0];
-    const coords = latLngs.map(latLng => {
-      const point = this.toPoint(latLng);
-      return [point.x, point.y] as L.PointTuple;
-    });
-
-    const feature = this.leafletService.createGeoJsonFeature(this.features.size, coords);
+    const feature = this.layerToFeature(this.features.size, layer);
     this.geoJsonLayer.addData(feature);
 
     const prevFeature = JSON.parse(JSON.stringify(feature));
     prevFeature.type = null;
     this.addToFeatureEditUndoStack([prevFeature]);
+  }
 
-    this.disableDrawMode();
+  private onFeatureEdit(fid: number, layer: L.Layer): void {
+    const feature = this.features.get(fid)!;
+    this.addToFeatureEditUndoStack([feature]);
+    this.features.set(fid, this.layerToFeature(fid, layer));
   }
 
   private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
