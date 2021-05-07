@@ -24,6 +24,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private geoJsonLayer!: L.GeoJSON;
   private drawFeatureControl!: L.Control;
   private cancelDrawFeatureControl!: L.Control;
+  private cutFeatureControl!: L.Control;
+  private cancelCutFeatureControl!: L.Control;
   private removeAllInnerPolygonsControl!: L.Control;
   private featureEditUndoControl!: L.Control;
   private sw!: L.PointTuple;
@@ -33,6 +35,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private readonly tileSize: number = 128;
   private maxNativeZoom!: number;
   private drawModeEnabled: boolean = false;
+  private cutModeEnabled: boolean = false;
   private features: Map<number, Feature<Geometry, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
   private featureEditUndoStack: Feature<Geometry, any>[][] = [];
@@ -251,6 +254,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.drawFeatureControl = this.leafletService.createDrawFeatureControl(() => this.enableDrawMode());
     this.cancelDrawFeatureControl = this.leafletService.createCancelDrawFeatureControl(() => this.disableDrawMode());
+    this.cutFeatureControl = this.leafletService.createCutFeatureControl(() => this.enableCutMode());
+    this.cancelCutFeatureControl = this.leafletService.createCancelCutFeatureControl(() => this.disableCutMode());
     this.removeAllInnerPolygonsControl = this.leafletService.createRemoveAllInnerPolygonsControl(() => this.removeAllInnerPolygons());
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
 
@@ -261,6 +266,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private updateTopLeftControls(): void {
     this.drawFeatureControl.remove();
     this.cancelDrawFeatureControl.remove();
+    this.cutFeatureControl.remove();
+    this.cancelCutFeatureControl.remove();
     this.removeAllInnerPolygonsControl.remove();
 
     if (this.selectedMaskId === null) {
@@ -272,6 +279,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.cancelDrawFeatureControl.addTo(this.maskMap);
     }
 
+    this.cutFeatureControl.addTo(this.maskMap);
+    if (this.cutModeEnabled) {
+      this.cancelCutFeatureControl.addTo(this.maskMap);
+    }
+
     this.removeAllInnerPolygonsControl.addTo(this.maskMap);
   }
 
@@ -279,11 +291,17 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     if (this.drawModeEnabled) {
       return;
     }
+    if (this.cutModeEnabled) {
+      this.disableCutMode();
+    }
     this.drawModeEnabled = true;
+    this.updateTopLeftControls();
+
     this.maskMap.pm.enableDraw('Polygon', {
+      // @ts-ignore
+      allowSelfIntersection: false,
       tooltips: false
     });
-    this.updateTopLeftControls();
   }
 
   private disableDrawMode(): void {
@@ -291,9 +309,35 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       return;
     }
     this.drawModeEnabled = false;
+    this.updateTopLeftControls();
     // @ts-ignore
     this.maskMap.pm.disableDraw();
+  }
+
+  private enableCutMode(): void {
+    if (this.cutModeEnabled) {
+      return;
+    }
+    if (this.drawModeEnabled) {
+      this.disableDrawMode();
+    }
+    this.cutModeEnabled = true;
     this.updateTopLeftControls();
+
+    this.maskMap.pm.enableGlobalCutMode({
+      // @ts-ignore
+      allowSelfIntersection: false,
+      tooltips: false
+    }); 
+  }
+
+  private disableCutMode(): void {
+    if (!this.cutModeEnabled) {
+      return;
+    }
+    this.cutModeEnabled = false;
+    this.updateTopLeftControls();
+    this.maskMap.pm.disableGlobalCutMode();
   }
 
   private handleMaskChange(maskId: string | null): void {
