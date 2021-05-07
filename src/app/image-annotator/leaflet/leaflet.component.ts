@@ -138,7 +138,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createFeaturePopup(fid: number): HTMLElement {
-    const popup = L.DomUtil.create('div', 'fid-' + fid);
+    const popup = L.DomUtil.create('div');
+    popup.id = 'fid-' + fid;
     popup.appendChild(this.createFeatureGradePopupHtml(fid));
     popup.appendChild(this.createFeatureEditPopupHtml(fid));
     return popup;
