@@ -39,6 +39,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private features: Map<number, Feature<Geometry, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
   private featureEditUndoStack: Feature<Geometry, any>[][] = [];
+  private cuttedFeature!: Feature<Geometry, any>;
 
   constructor(
     private apiService: ApiService,
@@ -100,6 +101,13 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.geoJsonLayer = L.geoJSON(undefined, {
       coordsToLatLng: (coords) => this.toLatLng(coords as L.PointTuple),
+      filter: (feature) => {
+        if (!feature.properties) {
+          this.cuttedFeature = feature;
+          return false
+        }
+        return true;
+      },
       onEachFeature: (feature, layer) => this.onEachFeature(feature, layer),
       // @ts-ignore
       snapIgnore: true
@@ -108,6 +116,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskMap.on('pm:create', (result) => {
       this.onFeatureCreated(result.layer);
       this.disableDrawMode();
+    });
+
+    this.maskMap.on('pm:cut', (result) => {
+      // @ts-ignore
+      this.onFeatureCutted(result.originalLayer.options.FID);
+      this.disableCutMode();
     });
 
     this.initControls();
@@ -365,6 +379,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private onEachFeature(feature: Feature<Geometry, any>, layer: L.Layer): void {
     const fid = feature.properties.FID;
+    // @ts-ignore
+    layer.options.FID = fid;
     this.features.set(fid, feature);
     this.featureLayers.set(fid, layer);
     layer.bindPopup(this.createFeaturePopup(fid));
@@ -396,6 +412,23 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const feature = this.features.get(fid)!;
     this.addToFeatureEditUndoStack([feature]);
     this.features.set(fid, this.layerToFeature(fid, layer));
+  }
+
+  private onFeatureCutted(originalFid: number): void {
+    if (this.cuttedFeature.geometry.type === 'Polygon') {
+      this.cuttedFeature.properties = {
+        FID: this.features.size
+      };
+      this.cuttedFeature.geometry.coordinates = this.cuttedFeature.geometry.coordinates.map(ring =>
+        ring.map(latLng => {
+          const point = this.maskMap.project([latLng[1], latLng[0]], this.maxNativeZoom);
+          return [point.x, point.y]
+        })
+      )
+      this.geoJsonLayer.addData(this.cuttedFeature);
+    } else if (this.cuttedFeature.geometry.type === 'MultiPolygon') {
+
+    }
   }
 
   private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
