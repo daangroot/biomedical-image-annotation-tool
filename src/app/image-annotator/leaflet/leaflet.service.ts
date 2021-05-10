@@ -1,13 +1,23 @@
 import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
-import { Feature, Geometry } from 'geojson';
+import { Feature, Geometry, Polygon, MultiPolygon } from 'geojson';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LeafletService {
+  private map!: L.Map;
+  private maxNativeZoom!: number; 
 
   constructor() { }
+
+  setMap(map: L.Map): void {
+    this.map = map;
+  }
+
+  setMaxNativeZoom(maxNativeZoom: number): void {
+    this.maxNativeZoom = maxNativeZoom;
+  }
 
   createMap(htmlId: string, canInteract: boolean = true): L.Map {
     return L.map(htmlId, {
@@ -32,18 +42,98 @@ export class LeafletService {
     return level;
   }
 
-  createGeoJsonFeature(fid: number, points: L.PointTuple[][] | L.PointTuple[][][]): Feature<Geometry, any> {
-    const isMultiPolygon = Array.isArray(points[0][0][0]);
+  isPolygon(points: L.PointTuple[][] | L.PointTuple[][][]): boolean {
+    return !Array.isArray(points[0][0][0]);
+  }
+
+  toLatLng(point: L.PointTuple): L.LatLng {
+    return this.map.unproject(point, this.maxNativeZoom);
+  }
+
+  toPoint(latLng: L.LatLng): L.PointTuple {
+    const point = this.map.project(latLng, this.maxNativeZoom);
+    return [point.x, point.y];
+  }
+
+  ringToPoints(ring: L.LatLng[]): L.PointTuple[] {
+    return ring.map(latLng => this.toPoint(latLng));
+  }
+
+  polygonToPoints(polygon: L.LatLng[][]): L.PointTuple[][] {
+    return polygon.map(ring => this.ringToPoints(ring));
+  }
+
+  multiPolygonToPoints(multiPolygon: L.LatLng[][][]): L.PointTuple[][][] {
+    return multiPolygon.map(polygon => this.polygonToPoints(polygon));
+  }
+
+  createPolygonFeature(points: L.PointTuple[][]): Feature<Polygon, any> {
     return {
       type: 'Feature',
-      properties: {
-        FID: fid
-      },
+      properties: {},
       geometry: {
-        type: isMultiPolygon ? 'MultiPolygon' : 'Polygon',
-        coordinates: points as any
+        type: 'Polygon',
+        coordinates: points
       }
     };
+  }
+
+  createMultiPolygonFeature(points: L.PointTuple[][][]): Feature<MultiPolygon, any> {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: points
+      }
+    };
+  }
+
+  layerToPoints(layer: L.Layer): L.PointTuple[][] | L.PointTuple[][][] {
+    // @ts-ignore
+    const latLngs = layer._latlngs;
+    if (!Array.isArray(latLngs[0][0])) { // Polygon
+      for (const ring of latLngs as L.LatLng[][]) {
+        if (ring[0].lat !== ring[ring.length - 1].lat || ring[0].lng !== ring[ring.length - 1].lng) {
+          ring.push(ring[0]);
+        }
+      }
+      return this.polygonToPoints(latLngs);
+    } else {
+      for (let polygon of latLngs as L.LatLng[][][]) {
+        for (const ring of polygon) {
+          if (ring[0].lat !== ring[ring.length - 1].lat || ring[0].lng !== ring[ring.length - 1].lng) {
+            ring.push(ring[0]);
+          }
+        }
+      }
+      return this.multiPolygonToPoints(latLngs);
+    }
+  }
+
+  layerToFeature(layer: L.Layer): Feature<Geometry, any> {
+    const points = this.layerToPoints(layer);
+    if (this.isPolygon(points)) {
+      return this.createPolygonFeature(points as L.PointTuple[][]);
+    } else {
+      return this.createMultiPolygonFeature(points as L.PointTuple[][][])
+    }
+  }
+
+  splitMultiPolygonFeature(feature: Feature<MultiPolygon, any>): Feature<Polygon, any>[] {
+    return feature.geometry.coordinates.map(polygon =>
+      this.createPolygonFeature(polygon as L.PointTuple[][])
+    )
+  }
+
+  removeInnerPolygons(feature: Feature<Geometry, any>): Feature<Geometry, any> {
+    if (feature.geometry.type === 'Polygon') {
+      feature.geometry.coordinates = [feature.geometry.coordinates[0]];
+    } else if (feature.geometry.type === 'MultiPolygon') {
+      feature.geometry.coordinates = [feature.geometry.coordinates[0][0]] as any;
+      feature.geometry.type = 'Polygon' as any;
+    }
+    return feature;
   }
 
   createTextControl(text: string, position: L.ControlPosition): L.Control {

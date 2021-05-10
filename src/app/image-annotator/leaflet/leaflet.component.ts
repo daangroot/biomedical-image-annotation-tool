@@ -1,7 +1,7 @@
 import { Input, Component, OnInit, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
-import { Geometry, Feature } from 'geojson';
+import { Feature, Geometry, Polygon, MultiPolygon } from 'geojson';
 import { environment } from '../../../environments/environment';
 import { HeaderService } from '../../header/header.service';
 import { ApiService } from '../../services/api.service';
@@ -36,10 +36,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private maxNativeZoom!: number;
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
-  private features: Map<number, Feature<Geometry, any>> = new Map();
+  private maxFid: number = -1;
+  private features: Map<number, Feature<Polygon | MultiPolygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
-  private featureEditUndoStack: Feature<Geometry, any>[][] = [];
-  private cuttedFeature!: Feature<Geometry, any>;
+  private featureEditUndoStack: Feature<Polygon | MultiPolygon, any>[][] = [];
+
 
   constructor(
     private apiService: ApiService,
@@ -62,6 +63,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.neMax = [this.ne[0] + offset, this.ne[1] - offset];
 
     this.maxNativeZoom = this.leafletService.calcMaxNativeZoomLevel(this.bioImageInfo.width, this.bioImageInfo.height, this.tileSize);
+    this.leafletService.setMaxNativeZoom(this.maxNativeZoom);
   }
 
   ngAfterViewInit(): void {
@@ -94,21 +96,15 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private initMaskMap(): void {
     this.maskMap = this.leafletService.createMap('leaflet-viewer-mask');
+    this.leafletService.setMap(this.maskMap);
     this.maskMap.setView([0, 0], 0);
-    this.maskMap.setMaxBounds(L.latLngBounds(this.toLatLng(this.swMax), this.toLatLng(this.neMax)));
+    this.maskMap.setMaxBounds(L.latLngBounds(this.leafletService.toLatLng(this.swMax), this.leafletService.toLatLng(this.neMax)));
 
     this.addTileLayer(this.maskMap);
 
     this.geoJsonLayer = L.geoJSON(undefined, {
-      coordsToLatLng: (coords) => this.toLatLng(coords as L.PointTuple),
-      filter: (feature) => {
-        if (!feature.properties) {
-          this.cuttedFeature = feature;
-          return false
-        }
-        return true;
-      },
-      onEachFeature: (feature, layer) => this.onEachFeature(feature, layer),
+      coordsToLatLng: (coords) => this.leafletService.toLatLng(coords as L.PointTuple),
+      onEachFeature: (feature: Feature<Polygon | MultiPolygon, any>, layer) => this.onEachFeature(feature, layer),
       // @ts-ignore
       snapIgnore: true
     }).addTo(this.maskMap);
@@ -120,7 +116,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.maskMap.on('pm:cut', (result) => {
       // @ts-ignore
-      this.onFeatureCutted(result.originalLayer.options.FID);
+      this.onFeatureCutted(result.layer.feature, result.originalLayer.feature);
       this.disableCutMode();
     });
 
@@ -134,36 +130,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskMap.invalidateSize();
   }
 
-  private toLatLng(point: L.PointTuple): L.LatLng {
-    return this.maskMap.unproject(point, this.maxNativeZoom);
-  }
-
-  private toPoint(latLng: L.LatLng): L.PointTuple {
-    const point = this.maskMap.project(latLng, this.maxNativeZoom);
-    return [point.x, point.y];
-  }
-
-  private polygonToPoints(polygon: L.LatLng[][]): L.PointTuple[][] {
-    return polygon.map(ring =>
-      ring.map(latLng =>
-        this.toPoint(latLng)
-      )
-    )
-  }
-
-  private multiPolygonToPoints(multiPolygon: L.LatLng[][][]): L.PointTuple[][][] {
-    return multiPolygon.map(polygon =>
-      polygon.map(ring =>
-        ring.map(latLng =>
-          this.toPoint(latLng)
-        )
-      )
-    )
-  }
-
   private addTileLayer(map: L.Map) {
     L.tileLayer(`${environment.apiUrl}/api/images/${this.bioImageInfo.id}/tiles/{z}/{y}/{x}`, {
-      bounds: L.latLngBounds(this.toLatLng(this.sw), this.toLatLng(this.ne)),
+      bounds: L.latLngBounds(this.leafletService.toLatLng(this.sw), this.leafletService.toLatLng(this.ne)),
       tileSize: this.tileSize,
       maxNativeZoom: this.maxNativeZoom
     }).addTo(map);
@@ -277,8 +246,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeAllInnerPolygonsControl = this.leafletService.createRemoveAllInnerPolygonsControl(() => this.removeAllInnerPolygons());
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
 
-    const imageNameControl = this.leafletService.createTextControl(this.bioImageInfo.originalName, 'bottomleft');
-    imageNameControl.addTo(this.maskMap);
+    this.leafletService.createTextControl(this.bioImageInfo.originalName, 'bottomleft').addTo(this.maskMap);
   }
 
   private updateTopLeftControls(): void {
@@ -346,7 +314,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       // @ts-ignore
       allowSelfIntersection: false,
       tooltips: false
-    }); 
+    });
   }
 
   private disableCutMode(): void {
@@ -377,58 +345,83 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private onEachFeature(feature: Feature<Geometry, any>, layer: L.Layer): void {
-    const fid = feature.properties.FID;
-    // @ts-ignore
-    layer.options.FID = fid;
+  private onEachFeature(feature: Feature<Polygon | MultiPolygon, any>, layer: L.Layer): void {
+    let fid = 0;
+    if (!feature.properties || feature.properties.FID == null) {
+      fid = this.maxFid + 1;
+      feature.properties = {
+        FID: fid
+      };
+    } else {
+      fid = feature.properties.FID;
+    }
+    if (fid > this.maxFid) {
+      this.maxFid = fid;
+    }
+
     this.features.set(fid, feature);
     this.featureLayers.set(fid, layer);
+
     layer.bindPopup(this.createFeaturePopup(fid));
+
     layer.on('pm:update', result =>
       this.onFeatureEdit(fid, result.layer)
     )
   }
 
-  private layerToFeature(fid: number, layer: L.Layer): Feature<Geometry, any> {
-    // @ts-ignore
-    const latLngs = layer._latlngs;
-    const isMultiPolygon = Array.isArray(latLngs[0][0]);
-    const points = isMultiPolygon ? this.multiPolygonToPoints(latLngs) : this.polygonToPoints(latLngs);
-    return this.leafletService.createGeoJsonFeature(fid, points);
-  }
-
   private onFeatureCreated(layer: L.Layer): void {
     layer.remove();
 
-    const feature = this.layerToFeature(this.features.size, layer);
+    const feature = this.leafletService.layerToFeature(layer);
     this.geoJsonLayer.addData(feature);
 
     const prevFeature = JSON.parse(JSON.stringify(feature));
-    prevFeature.type = null;
+    prevFeature.geometry = null;
     this.addToFeatureEditUndoStack([prevFeature]);
   }
 
   private onFeatureEdit(fid: number, layer: L.Layer): void {
     const feature = this.features.get(fid)!;
     this.addToFeatureEditUndoStack([feature]);
-    this.features.set(fid, this.layerToFeature(fid, layer));
+    feature.geometry.coordinates = this.leafletService.layerToPoints(layer);
   }
 
-  private onFeatureCutted(originalFid: number): void {
-    if (this.cuttedFeature.geometry.type === 'Polygon') {
-      this.cuttedFeature.properties = {
-        FID: this.features.size
-      };
-      this.cuttedFeature.geometry.coordinates = this.cuttedFeature.geometry.coordinates.map(ring =>
+  private onFeatureCutted(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon | MultiPolygon, any>): void {
+    if (!feature) { // Feature is cutted out completely.
+      this.addToFeatureEditUndoStack([prevFeature]);
+      this.removeFeature(prevFeature.properties.FID);
+      return;
+    }
+
+    const undoFeatures = [prevFeature];
+
+    let features: Feature<Polygon, any>[] = [];
+    if (feature.geometry.type === 'Polygon') {
+      const copy = JSON.parse(JSON.stringify(feature));
+      copy.properties = {};
+      features = [copy];
+    } else if (feature.geometry.type === 'MultiPolygon') {
+      features = this.leafletService.splitMultiPolygonFeature(feature as Feature<MultiPolygon, any>);
+    }
+
+    for (const feature of features) {
+      feature.geometry.coordinates = feature.geometry.coordinates.map(ring =>
         ring.map(latLng => {
           const point = this.maskMap.project([latLng[1], latLng[0]], this.maxNativeZoom);
-          return [point.x, point.y]
+          return [point.x, point.y];
         })
       )
-      this.geoJsonLayer.addData(this.cuttedFeature);
-    } else if (this.cuttedFeature.geometry.type === 'MultiPolygon') {
+      this.geoJsonLayer.addData(feature);
 
+      const prevFeature = JSON.parse(JSON.stringify(feature));
+      prevFeature.geometry = null;
+      undoFeatures.push(prevFeature);
     }
+
+    this.addToFeatureEditUndoStack(undoFeatures);
+
+    this.removeFeature(feature.properties.FID);
+    this.removeFeature(prevFeature.properties.FID);
   }
 
   private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
@@ -447,20 +440,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private removeInnerPolygons(fid: number, openPopup: boolean = false) {
-    const feature = this.features.get(fid)!;
-    
-    if (feature.geometry.type === 'Polygon') {
-      feature.geometry.coordinates = [feature.geometry.coordinates[0]];
-    } else if (feature.geometry.type === 'MultiPolygon') {
-      feature.geometry.coordinates = [feature.geometry.coordinates[0][0]] as any;
-      feature.geometry.type = 'Polygon' as any;
-    }
-
+    this.leafletService.removeInnerPolygons(this.features.get(fid)!);
     this.updateFeatureLayer(fid, openPopup);
   }
 
   private removeAllInnerPolygons(): void {
-    const featuresWithInner: Feature[] = [];
+    const featuresWithInner: Feature<Polygon | MultiPolygon, any>[] = [];
 
     this.features.forEach(feature => {
       const hasInnerPolygon = (feature.geometry as any).coordinates.length > 1;
@@ -473,7 +458,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.addToFeatureEditUndoStack(featuresWithInner);
   }
 
-  private addToFeatureEditUndoStack(features: Feature<Geometry, any>[]): void {
+  private addToFeatureEditUndoStack(features: Feature<Polygon | MultiPolygon, any>[]): void {
     if (features.length === 0) {
       return;
     }
@@ -491,7 +476,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     const prevFeatures = this.featureEditUndoStack.pop()!;
     prevFeatures.forEach(feature => {
-      if (feature.type === null) {
+      if (feature.geometry === null) {
         // Feature was created before undo, so remove it.
         this.removeFeature(feature.properties.FID);
         return;
