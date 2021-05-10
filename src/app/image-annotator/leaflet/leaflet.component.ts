@@ -151,8 +151,28 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const layer = this.featureLayers.get(fid)!;
     const container = L.DomUtil.create('div');
 
-    const deleteContainer = L.DomUtil.create('div', 'mb-1', container);
-    const deleteButton = L.DomUtil.create('button', 'btn btn-danger', deleteContainer);
+    const editDeleteContainer = L.DomUtil.create('div', 'mb-2', container);
+    const editButton = L.DomUtil.create('button', 'btn btn-primary me-2', editDeleteContainer);
+    editButton.innerHTML = 'Edit';
+    editButton.onclick = () => {
+      editButton.hidden = true;
+      finishEditButton.hidden = false;
+      layer.pm.enable({
+        allowSelfIntersection: false,
+        limitMarkersToCount: 256
+      })
+    };
+
+    const finishEditButton = L.DomUtil.create('button', 'btn btn-primary me-2', editDeleteContainer);
+    finishEditButton.innerHTML = 'Finish edit';
+    finishEditButton.hidden = true
+    finishEditButton.onclick = () => {
+      editButton.hidden = false;
+      finishEditButton.hidden = true;
+      layer.pm.disable();
+    };
+
+    const deleteButton = L.DomUtil.create('button', 'btn btn-danger', editDeleteContainer);
     deleteButton.innerHTML = 'Remove';
     deleteButton.onclick = () => {
       this.addToFeatureEditUndoStack([feature]);
@@ -170,33 +190,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       };
     }
 
-    const editContainer = L.DomUtil.create('div', 'mb-1', container);
-    const editButton = L.DomUtil.create('button', 'btn btn-primary', editContainer);
-    const finishEditButton = L.DomUtil.create('button', 'btn btn-primary', editContainer);
-
-    editButton.innerHTML = 'Edit';
-    editButton.onclick = () => {
-      editButton.hidden = true;
-      finishEditButton.hidden = false;
-      layer.pm.enable({
-        allowSelfIntersection: false,
-        limitMarkersToCount: 256
-      })
-    };
-
-    finishEditButton.innerHTML = 'Finish edit';
-    finishEditButton.hidden = true
-    finishEditButton.onclick = () => {
-      editButton.hidden = false;
-      finishEditButton.hidden = true;
-      layer.pm.disable();
-    };
 
     return container;
   }
 
   private createFeatureGradePopupHtml(fid: number): HTMLElement {
-    const gradingContainer = L.DomUtil.create('div', 'mb-1 container');
+    const gradingContainer = L.DomUtil.create('div', 'mb-3 container');
 
     // True positives
 
