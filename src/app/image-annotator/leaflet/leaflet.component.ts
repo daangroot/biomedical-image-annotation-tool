@@ -217,7 +217,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       const scoreInput = event.target as HTMLInputElement;
       this.setFeatureScore(fid, scoreInput.value);
     }
-    scoreInput.value = feature.properties.score.toString();
+    if (feature.properties.score) {
+      scoreInput.value = feature.properties.score.toString();
+    }
 
     const scoreText = L.DomUtil.create('span', 'input-group-text', scoreContainer);
     scoreText.innerHTML = '%';
