@@ -229,6 +229,23 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private createFeatureGradePopupHtml(fid: number): HTMLElement {
     const gradingContainer = L.DomUtil.create('div', 'mb-1 container');
 
+    // Segment score
+
+    const scoreContainer = L.DomUtil.create('div', 'input-group mb-3', gradingContainer);
+
+    const scoreInput = L.DomUtil.create('input', 'form-control', scoreContainer) as HTMLInputElement;
+    scoreInput.type = 'number';
+    scoreInput.min = '0';
+    scoreInput.max = '100';
+    scoreInput.placeholder = 'Segment score';
+    scoreInput.oninput = (event: Event) => {
+      const scoreInput = event.target as HTMLInputElement;
+      this.setFeatureScore(fid, scoreInput.value);
+    }
+
+    const scoreText = L.DomUtil.create('span', 'input-group-text', scoreContainer);
+    scoreText.innerHTML = '%';
+
     // True positives
 
     const truePositive = L.DomUtil.create('input', 'btn-check', gradingContainer) as HTMLInputElement;
@@ -255,6 +272,15 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     falsePositiveLabel.htmlFor = falsePositive.id;
 
     return gradingContainer;
+  }
+
+  private setFeatureScore(fid: number, scoreString: string): void {
+    try {
+      const score = parseInt(scoreString);
+      const feature = this.features.get(fid)!;
+      feature.properties.score = score;
+    }
+    catch {}
   }
 
   private setFeatureGrade(fid: number, truePositive: boolean): void {
