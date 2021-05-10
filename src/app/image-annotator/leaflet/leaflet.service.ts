@@ -1,13 +1,23 @@
 import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
-import { Feature, Geometry } from 'geojson';
+import { Feature, Polygon, MultiPolygon } from 'geojson';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LeafletService {
+  private map!: L.Map;
+  private maxNativeZoom!: number; 
 
   constructor() { }
+
+  setMap(map: L.Map): void {
+    this.map = map;
+  }
+
+  setMaxNativeZoom(maxNativeZoom: number): void {
+    this.maxNativeZoom = maxNativeZoom;
+  }
 
   createMap(htmlId: string, canInteract: boolean = true): L.Map {
     return L.map(htmlId, {
@@ -32,18 +42,58 @@ export class LeafletService {
     return level;
   }
 
-  createGeoJsonFeature(fid: number, points: L.PointTuple[][] | L.PointTuple[][][]): Feature<Geometry, any> {
-    const isMultiPolygon = Array.isArray(points[0][0][0]);
+  toLatLng(point: L.PointTuple): L.LatLng {
+    return this.map.unproject(point, this.maxNativeZoom);
+  }
+
+  toPoint(latLng: L.LatLng): L.PointTuple {
+    const point = this.map.project(latLng, this.maxNativeZoom);
+    return [point.x, point.y];
+  }
+
+  ringToPoints(ring: L.LatLng[]): L.PointTuple[] {
+    return ring.map(latLng => this.toPoint(latLng));
+  }
+
+  polygonToPoints(polygon: L.LatLng[][]): L.PointTuple[][] {
+    return polygon.map(ring => this.ringToPoints(ring));
+  }
+
+  createFeature(points: L.PointTuple[][]): Feature<Polygon, any> {
     return {
       type: 'Feature',
-      properties: {
-        FID: fid
-      },
+      properties: {},
       geometry: {
-        type: isMultiPolygon ? 'MultiPolygon' : 'Polygon',
-        coordinates: points as any
+        type: 'Polygon',
+        coordinates: points
       }
     };
+  }
+
+  layerToPoints(layer: L.Layer): L.PointTuple[][] {
+    // @ts-ignore
+    const latLngs = layer._latlngs as L.LatLng[][];
+    for (const ring of latLngs) {
+      if (ring[0].lat !== ring[ring.length - 1].lat || ring[0].lng !== ring[ring.length - 1].lng) {
+        ring.push(ring[0]);
+      }
+    }
+    return this.polygonToPoints(latLngs);
+  }
+
+  layerToFeature(layer: L.Layer): Feature<Polygon, any> {
+    return this.createFeature(this.layerToPoints(layer));
+  }
+
+  splitMultiPolygonFeature(feature: Feature<MultiPolygon, any>): Feature<Polygon, any>[] {
+    return feature.geometry.coordinates.map(
+      polygon => this.createFeature(polygon as L.PointTuple[][])
+    )
+  }
+
+  removeInnerPolygons(feature: Feature<Polygon, any>): Feature<Polygon, any> {
+    feature.geometry.coordinates = [feature.geometry.coordinates[0]];
+    return feature;
   }
 
   createTextControl(text: string, position: L.ControlPosition): L.Control {
