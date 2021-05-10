@@ -1,7 +1,7 @@
 import { Input, Component, OnInit, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
-import { Feature, Geometry, Polygon, MultiPolygon } from 'geojson';
+import { Feature, Polygon, MultiPolygon } from 'geojson';
 import { environment } from '../../../environments/environment';
 import { HeaderService } from '../../header/header.service';
 import { ApiService } from '../../services/api.service';
@@ -37,9 +37,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
   private maxFid: number = -1;
-  private features: Map<number, Feature<Polygon | MultiPolygon, any>> = new Map();
+  private features: Map<number, Feature<Polygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
-  private featureEditUndoStack: Feature<Polygon | MultiPolygon, any>[][] = [];
+  private featureEditUndoStack: Feature<Polygon, any>[][] = [];
 
 
   constructor(
@@ -104,7 +104,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.geoJsonLayer = L.geoJSON(undefined, {
       coordsToLatLng: (coords) => this.leafletService.toLatLng(coords as L.PointTuple),
-      onEachFeature: (feature: Feature<Polygon | MultiPolygon, any>, layer) => this.onEachFeature(feature, layer),
+      onEachFeature: (feature: Feature<Polygon, any>, layer) => this.onEachFeature(feature, layer),
       // @ts-ignore
       snapIgnore: true
     }).addTo(this.maskMap);
@@ -345,7 +345,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private onEachFeature(feature: Feature<Polygon | MultiPolygon, any>, layer: L.Layer): void {
+  private onEachFeature(feature: Feature<Polygon, any>, layer: L.Layer): void {
     let fid = 0;
     if (!feature.properties || feature.properties.FID == null) {
       fid = this.maxFid + 1;
@@ -386,7 +386,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     feature.geometry.coordinates = this.leafletService.layerToPoints(layer);
   }
 
-  private onFeatureCutted(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon | MultiPolygon, any>): void {
+  private onFeatureCutted(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon, any>): void {
     if (!feature) { // Feature is cutted out completely.
       this.addToFeatureEditUndoStack([prevFeature]);
       this.removeFeature(prevFeature.properties.FID);
@@ -445,7 +445,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private removeAllInnerPolygons(): void {
-    const featuresWithInner: Feature<Polygon | MultiPolygon, any>[] = [];
+    const featuresWithInner: Feature<Polygon, any>[] = [];
 
     this.features.forEach(feature => {
       const hasInnerPolygon = (feature.geometry as any).coordinates.length > 1;
@@ -458,7 +458,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.addToFeatureEditUndoStack(featuresWithInner);
   }
 
-  private addToFeatureEditUndoStack(features: Feature<Polygon | MultiPolygon, any>[]): void {
+  private addToFeatureEditUndoStack(features: Feature<Polygon, any>[]): void {
     if (features.length === 0) {
       return;
     }
