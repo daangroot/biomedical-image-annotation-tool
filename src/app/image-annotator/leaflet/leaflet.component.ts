@@ -239,7 +239,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     scoreInput.type = 'number';
     scoreInput.min = '0';
     scoreInput.max = '100';
-    scoreInput.placeholder = 'Segment score';
+    scoreInput.placeholder = 'Score';
     scoreInput.id = `segment-score-${fid}`;
     scoreInput.oninput = (event: Event) => {
       const scoreInput = event.target as HTMLInputElement;
@@ -254,7 +254,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     // Grading
 
+    const gradeLabel = L.DomUtil.create('label', 'form-label', gradingContainer) as HTMLLabelElement;
+    gradeLabel.htmlFor = `segment-grade-${fid}`;
+    gradeLabel.innerHTML = 'Segment grade';
+
     const gradeSelect = L.DomUtil.create('select', 'form-select', gradingContainer) as HTMLSelectElement;
+    gradeSelect.id = `segment-grade-${fid}`;
 
     L.DomUtil.create('option', undefined, gradeSelect);
 
