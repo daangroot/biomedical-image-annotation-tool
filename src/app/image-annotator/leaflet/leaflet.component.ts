@@ -434,16 +434,16 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private determineFeatureStyle(feature: Feature<Polygon, any>): L.PathOptions {
-    let color;
+    if (!feature.properties) {
+      return {};
+    }
+
     switch (feature.properties.grade) {
-      case FeatureGrade.TruePositive:  color = '#198754'; break;
-      case FeatureGrade.FalsePositive: color = '#dc3545'; break;
-      case FeatureGrade.FalseNegative: color = '#fd7e14'; break;
+      case FeatureGrade.TruePositive:  return { color: 'green' };
+      case FeatureGrade.FalsePositive: return { color: 'red' };
+      case FeatureGrade.FalseNegative: return { color: 'orange' };
+      default: return {};
     }
-    if (color) {
-      return { color: color };
-    }
-    return {};
   }
 
   private onEachFeature(feature: Feature<Polygon, any>, layer: L.Layer): void {
