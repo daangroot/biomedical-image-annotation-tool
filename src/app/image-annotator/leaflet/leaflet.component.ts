@@ -116,13 +116,13 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }).addTo(this.maskMap);
 
     this.maskMap.on('pm:create', (result) => {
-      this.onFeatureCreated(result.layer);
+      this.createFeature(result.layer);
       this.disableDrawMode();
     });
 
     this.maskMap.on('pm:cut', (result) => {
       // @ts-ignore
-      this.onFeatureCutted(result.layer.feature, result.originalLayer.feature);
+      this.cutFeature(result.layer.feature, result.originalLayer.feature);
       this.disableCutMode();
     });
 
@@ -157,8 +157,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const layer = this.featureLayers.get(fid)!;
     const container = L.DomUtil.create('div');
 
-    const editDeleteContainer = L.DomUtil.create('div', 'mb-2', container);
-    const editButton = L.DomUtil.create('button', 'btn btn-primary me-2', editDeleteContainer);
+    const editSimplifyContainer = L.DomUtil.create('div', 'mb-2', container);
+    const editButton = L.DomUtil.create('button', 'btn btn-primary me-2', editSimplifyContainer);
     editButton.innerHTML = 'Edit';
     editButton.onclick = () => {
       editButton.hidden = true;
@@ -169,7 +169,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       })
     };
 
-    const finishEditButton = L.DomUtil.create('button', 'btn btn-primary me-2', editDeleteContainer);
+    const finishEditButton = L.DomUtil.create('button', 'btn btn-primary me-2', editSimplifyContainer);
     finishEditButton.innerHTML = 'Finish edit';
     finishEditButton.hidden = true
     finishEditButton.onclick = () => {
@@ -178,22 +178,33 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       layer.pm.disable();
     };
 
-    const deleteButton = L.DomUtil.create('button', 'btn btn-danger', editDeleteContainer);
-    deleteButton.innerHTML = 'Remove';
-    deleteButton.onclick = () => {
-      this.addToFeatureEditUndoStack([feature]);
-      this.removeFeature(fid);
-    };
+    if (this.leafletService.hasNonTriangularRing(feature)) {
+      const simplifyButton = L.DomUtil.create('button', 'btn btn-primary me-2', editSimplifyContainer);
+      simplifyButton.innerHTML = feature.properties.simplifyTolerance === 0 ? 'Simplify' : 'Simplify more';
+      simplifyButton.onclick = () => {
+        this.addToFeatureEditUndoStack([feature]);
+        this.simplifyFeature(fid, true);
+      };
+    }
 
-    if (feature.geometry.coordinates.length > 1) {
-      const deleteInnerContainer = L.DomUtil.create('div', 'mb-1', container);
+    const innerPolygonCount = feature.geometry.coordinates.length - 1;
+    if (innerPolygonCount > 0) {
+      const deleteInnerContainer = L.DomUtil.create('div', 'mb-2', container);
       const deleteInnerButton = L.DomUtil.create('button', 'btn btn-danger', deleteInnerContainer);
-      deleteInnerButton.innerHTML = 'Remove inner polygon(s)';
+      deleteInnerButton.innerHTML = innerPolygonCount === 1 ? 'Remove inner polygon' : 'Remove inner polygons';
       deleteInnerButton.onclick = () => {
         this.addToFeatureEditUndoStack([feature]);
         this.removeInnerPolygons(fid, true);
       };
     }
+
+    const deleteContainer = L.DomUtil.create('div', 'mb-2', container);
+    const deleteButton = L.DomUtil.create('button', 'btn btn-danger', deleteContainer);
+    deleteButton.innerHTML = 'Remove';
+    deleteButton.onclick = () => {
+      this.addToFeatureEditUndoStack([feature]);
+      this.removeFeature(fid);
+    };
 
     return container;
   }
@@ -419,8 +430,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private onEachFeature(feature: Feature<Polygon, any>, layer: L.Layer): void {
+    if (!feature.properties) {
+      feature.properties = {};
+    }
+
     let fid = 0;
-    if (!feature.properties || feature.properties.FID == null) {
+    if (feature.properties.FID == null) {
       fid = this.maxFid + 1;
       feature.properties = {
         FID: fid
@@ -432,17 +447,21 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.maxFid = fid;
     }
 
+    if (feature.properties.simplifyTolerance == null) {
+      feature.properties.simplifyTolerance = 0;
+    }
+
     this.features.set(fid, feature);
     this.featureLayers.set(fid, layer);
 
     layer.bindPopup(this.createFeaturePopup(fid));
 
     layer.on('pm:update', result =>
-      this.onFeatureEdit(fid, result.layer)
+      this.editFeature(fid, result.layer)
     )
   }
 
-  private onFeatureCreated(layer: L.Layer): void {
+  private createFeature(layer: L.Layer): void {
     layer.remove();
 
     const feature = this.leafletService.layerToFeature(layer);
@@ -453,13 +472,24 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.addToFeatureEditUndoStack([prevFeature]);
   }
 
-  private onFeatureEdit(fid: number, layer: L.Layer): void {
+  private editFeature(fid: number, layer: L.Layer): void {
     const feature = this.features.get(fid)!;
     this.addToFeatureEditUndoStack([feature]);
     feature.geometry.coordinates = this.leafletService.layerToPoints(layer);
   }
 
-  private onFeatureCutted(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon, any>): void {
+  private simplifyFeature(fid: number, openPopup: boolean = false): void {
+    const feature = this.features.get(fid)!;
+    let simplifiedFeature;
+    do {
+      simplifiedFeature = this.leafletService.simplifyFeature(feature, ++feature.properties.simplifyTolerance);
+    } while (this.leafletService.hasNonTriangularRing(simplifiedFeature) && this.leafletService.haveEqualPolygons(feature, simplifiedFeature));
+
+    this.features.set(fid, simplifiedFeature);
+    this.updateFeatureLayer(fid, openPopup);
+  }
+
+  private cutFeature(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon, any>): void {
     if (!feature) { // Feature is cutted out completely.
       this.addToFeatureEditUndoStack([prevFeature]);
       this.removeFeature(prevFeature.properties.FID);
@@ -505,14 +535,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private removeFeature(fid: number) {
-    this.featureLayers.get(fid)?.remove();
-    this.features.delete(fid);
-    this.featureLayers.delete(fid);
-  }
-
   private removeInnerPolygons(fid: number, openPopup: boolean = false) {
-    this.leafletService.removeInnerPolygons(this.features.get(fid)!);
+    const feature = this.features.get(fid)!
+    feature.geometry.coordinates = this.leafletService.removeInnerPolygons(feature.geometry.coordinates as L.PointTuple[][]);
     this.updateFeatureLayer(fid, openPopup);
   }
 
@@ -527,6 +552,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     this.addToFeatureEditUndoStack(featuresWithInner);
+  }
+
+  private removeFeature(fid: number) {
+    this.featureLayers.get(fid)?.remove();
+    this.features.delete(fid);
+    this.featureLayers.delete(fid);
   }
 
   private addToFeatureEditUndoStack(features: Feature<Polygon, any>[]): void {

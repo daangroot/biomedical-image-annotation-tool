@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
 import { Feature, Polygon, MultiPolygon } from 'geojson';
+import simplify from '@turf/simplify';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LeafletService {
   private map!: L.Map;
-  private maxNativeZoom!: number; 
+  private maxNativeZoom!: number;
 
   constructor() { }
 
@@ -70,6 +71,36 @@ export class LeafletService {
     };
   }
 
+  haveEqualPolygons(feature1: Feature<Polygon, any>, feature2: Feature<Polygon, any>): boolean {
+    if (feature1.geometry.coordinates.length !== feature2.geometry.coordinates.length) {
+      return false;
+    }
+
+    for (let i = 0; i < feature1.geometry.coordinates.length; i++) {
+      if (feature1.geometry.coordinates[i].length !== feature2.geometry.coordinates[i].length) {
+        return false;
+      }
+      for (let j = 0; j < feature1.geometry.coordinates[i].length; j++) {
+        if (feature1.geometry.coordinates[i][j][0] !== feature2.geometry.coordinates[i][j][0] ||
+              feature1.geometry.coordinates[i][j][1] !== feature2.geometry.coordinates[i][j][1]) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  hasNonTriangularRing(feature: Feature<Polygon, any>): boolean {
+    for (const ring of feature.geometry.coordinates) {
+      if (ring.length > 4) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   layerToPoints(layer: L.Layer): L.PointTuple[][] {
     // @ts-ignore
     const latLngs = layer._latlngs as L.LatLng[][];
@@ -91,9 +122,14 @@ export class LeafletService {
     )
   }
 
-  removeInnerPolygons(feature: Feature<Polygon, any>): Feature<Polygon, any> {
-    feature.geometry.coordinates = [feature.geometry.coordinates[0]];
-    return feature;
+  simplifyFeature(feature: Feature<Polygon, any>, tolerance: number = 1): Feature<Polygon, any> {
+    return simplify(feature, {
+      tolerance: tolerance
+    });
+  }
+
+  removeInnerPolygons(polygon: L.PointTuple[][]): L.PointTuple[][] {
+    return [polygon[0]];
   }
 
   createTextControl(text: string, position: L.ControlPosition): L.Control {
