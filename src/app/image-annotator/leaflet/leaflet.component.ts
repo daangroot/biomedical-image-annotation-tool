@@ -30,14 +30,14 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private drawFeatureControl!: L.Control;
   private cancelDrawFeatureControl!: L.Control;
   private cutFeatureControl!: L.Control;
-  private cancelCutFeatureControl!: L.Control;
-  private removeAllInnerPolygonsControl!: L.Control;
+  private cancelCutFeatureControl!: L.Control
+  private simplifyAllPolygonsControl!: L.Control;
+  private removeAllInnerRingsControl!: L.Control;
   private featureEditUndoControl!: L.Control;
   private sw!: L.PointTuple;
   private ne!: L.PointTuple;
   private swMax!: L.PointTuple;
   private neMax!: L.PointTuple;
-  private readonly tileSize: number = 128;
   private maxNativeZoom!: number;
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
@@ -46,7 +46,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private features: Map<number, Feature<Polygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
   private featureEditUndoStack: Feature<Polygon, any>[][] = [];
-
+  private readonly tileSize: number = 128;
+  private readonly maxSimplifyTolerance: number = 10000;
 
   constructor(
     private apiService: ApiService,
@@ -70,6 +71,18 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.maxNativeZoom = this.leafletService.calcMaxNativeZoomLevel(this.bioImageInfo.width, this.bioImageInfo.height, this.tileSize);
     this.leafletService.setMaxNativeZoom(this.maxNativeZoom);
+
+    this.splitScreenControl = this.leafletService.createSplitScreenControl(() => this.toggleBaseMap());
+    this.maskControl = this.leafletService.createMaskControl();
+    this.showTopLeftControlsControl = this.leafletService.createShowControlsControl(() => this.toggleTopLeftControls());
+    this.hideTopLeftControlsControl = this.leafletService.createHideControlsControl(() => this.toggleTopLeftControls());
+    this.drawFeatureControl = this.leafletService.createDrawFeatureControl(() => this.enableDrawMode());
+    this.cancelDrawFeatureControl = this.leafletService.createCancelDrawFeatureControl(() => this.disableDrawMode());
+    this.cutFeatureControl = this.leafletService.createCutFeatureControl(() => this.enableCutMode());
+    this.cancelCutFeatureControl = this.leafletService.createCancelCutFeatureControl(() => this.disableCutMode());
+    this.simplifyAllPolygonsControl = this.leafletService.createSimplifyAllFeaturesControl(() => this.simplifyAllFeatures());
+    this.removeAllInnerRingsControl = this.leafletService.createRemoveAllInnerRingsControl(() => this.removeAllInnerRings());
+    this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
   }
 
   ngAfterViewInit(): void {
@@ -126,7 +139,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.disableCutMode();
     });
 
-    this.initControls();
+    this.addControls();
   }
 
   private fitContainer(): void {
@@ -178,7 +191,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       layer.pm.disable();
     };
 
-    if (this.leafletService.hasNonTriangularRing(feature)) {
+    if (this.leafletService.hasNonTriangularRing(feature) && feature.properties.simplifyTolerance <= this.maxSimplifyTolerance) {
       const simplifyButton = L.DomUtil.create('button', 'btn btn-primary me-2', editSimplifyContainer);
       simplifyButton.innerHTML = feature.properties.simplifyTolerance === 0 ? 'Simplify' : 'Simplify more';
       simplifyButton.onclick = () => {
@@ -187,14 +200,14 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       };
     }
 
-    const innerPolygonCount = feature.geometry.coordinates.length - 1;
-    if (innerPolygonCount > 0) {
+    const innerRingCount = feature.geometry.coordinates.length - 1;
+    if (innerRingCount > 0) {
       const deleteInnerContainer = L.DomUtil.create('div', 'mb-2', container);
       const deleteInnerButton = L.DomUtil.create('button', 'btn btn-danger', deleteInnerContainer);
-      deleteInnerButton.innerHTML = innerPolygonCount === 1 ? 'Remove inner polygon' : 'Remove inner polygons';
+      deleteInnerButton.innerHTML = innerRingCount === 1 ? 'Remove inner ring' : 'Remove inner rings';
       deleteInnerButton.onclick = () => {
         this.addToFeatureEditUndoStack([feature]);
-        this.removeInnerPolygons(fid, true);
+        this.removeInnerRings(fid, true);
       };
     }
 
@@ -294,21 +307,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     feature.properties.grade = grade;
   }
 
-  private initControls(): void {
+  private addControls(): void {
     L.control.zoom({
       position: 'bottomright'
     }).addTo(this.maskMap);
-
-    this.splitScreenControl = this.leafletService.createSplitScreenControl(() => this.toggleBaseMap());
-    this.maskControl = this.leafletService.createMaskControl();
-    this.showTopLeftControlsControl = this.leafletService.createShowControlsControl(() => this.toggleTopLeftControls());
-    this.hideTopLeftControlsControl = this.leafletService.createHideControlsControl(() => this.toggleTopLeftControls());
-    this.drawFeatureControl = this.leafletService.createDrawFeatureControl(() => this.enableDrawMode());
-    this.cancelDrawFeatureControl = this.leafletService.createCancelDrawFeatureControl(() => this.disableDrawMode());
-    this.cutFeatureControl = this.leafletService.createCutFeatureControl(() => this.enableCutMode());
-    this.cancelCutFeatureControl = this.leafletService.createCancelCutFeatureControl(() => this.disableCutMode());
-    this.removeAllInnerPolygonsControl = this.leafletService.createRemoveAllInnerPolygonsControl(() => this.removeAllInnerPolygons());
-    this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
 
     this.leafletService.createTextControl(this.bioImageInfo.originalName, 'bottomleft').addTo(this.maskMap);
 
@@ -324,7 +326,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.cancelDrawFeatureControl.remove();
     this.cutFeatureControl.remove();
     this.cancelCutFeatureControl.remove();
-    this.removeAllInnerPolygonsControl.remove();
+    this.simplifyAllPolygonsControl.remove();
+    this.removeAllInnerRingsControl.remove();
 
     if (!this.showTopLeftControls) {
       this.showTopLeftControlsControl.addTo(this.maskMap);
@@ -349,7 +352,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.cancelCutFeatureControl.addTo(this.maskMap);
     }
 
-    this.removeAllInnerPolygonsControl.addTo(this.maskMap);
+    this.simplifyAllPolygonsControl.addTo(this.maskMap);
+    this.removeAllInnerRingsControl.addTo(this.maskMap);
   }
 
   private toggleTopLeftControls() {
@@ -461,6 +465,15 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     )
   }
 
+  private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
+    this.featureLayers.get(fid)?.remove();
+    this.geoJsonLayer.addData(this.features.get(fid)!);
+
+    if (openPopup) {
+      this.featureLayers.get(fid)!.openPopup();
+    }
+  }
+
   private createFeature(layer: L.Layer): void {
     layer.remove();
 
@@ -476,17 +489,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const feature = this.features.get(fid)!;
     this.addToFeatureEditUndoStack([feature]);
     feature.geometry.coordinates = this.leafletService.layerToPoints(layer);
-  }
-
-  private simplifyFeature(fid: number, openPopup: boolean = false): void {
-    const feature = this.features.get(fid)!;
-    let simplifiedFeature;
-    do {
-      simplifiedFeature = this.leafletService.simplifyFeature(feature, ++feature.properties.simplifyTolerance);
-    } while (this.leafletService.hasNonTriangularRing(simplifiedFeature) && this.leafletService.haveEqualPolygons(feature, simplifiedFeature));
-
-    this.features.set(fid, simplifiedFeature);
-    this.updateFeatureLayer(fid, openPopup);
   }
 
   private cutFeature(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon, any>): void {
@@ -526,32 +528,55 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeFeature(prevFeature.properties.FID);
   }
 
-  private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
-    this.featureLayers.get(fid)?.remove();
-    this.geoJsonLayer.addData(this.features.get(fid)!);
-
-    if (openPopup) {
-      this.featureLayers.get(fid)!.openPopup();
+  private simplifyFeature(fid: number, openPopup: boolean = false): boolean {
+    const feature = this.features.get(fid)!;
+    let simplifiedFeature = feature;
+    let isSimplified = false;
+    while (this.leafletService.hasNonTriangularRing(simplifiedFeature) &&
+      feature.properties.simplifyTolerance <= this.maxSimplifyTolerance &&
+      this.leafletService.haveEqualPolygons(feature, simplifiedFeature))
+    {
+      simplifiedFeature = this.leafletService.simplifyFeature(feature, ++feature.properties.simplifyTolerance);
+      isSimplified = true;
     }
-  }
 
-  private removeInnerPolygons(fid: number, openPopup: boolean = false) {
-    const feature = this.features.get(fid)!
-    feature.geometry.coordinates = this.leafletService.removeInnerPolygons(feature.geometry.coordinates as L.PointTuple[][]);
+    this.features.set(fid, simplifiedFeature);
     this.updateFeatureLayer(fid, openPopup);
+
+    return isSimplified;
   }
 
-  private removeAllInnerPolygons(): void {
-    const featuresWithInner: Feature<Polygon, any>[] = [];
+  private simplifyAllFeatures(): void {
+    const simplifiedFeatures: Feature<Polygon, any>[] = [];
 
     for (const feature of this.features.values()) {
-      if (feature.geometry.coordinates.length > 1) {
-        featuresWithInner.push(JSON.parse(JSON.stringify(feature)));
-        this.removeInnerPolygons(feature.properties.FID);
+      const copy = JSON.parse(JSON.stringify(feature));
+      const isSimplified = this.simplifyFeature(feature.properties.FID);
+      if (isSimplified) {
+        simplifiedFeatures.push(copy);
       }
     }
 
-    this.addToFeatureEditUndoStack(featuresWithInner);
+    this.addToFeatureEditUndoStack(simplifiedFeatures);
+  }
+
+  private removeInnerRings(fid: number, openPopup: boolean = false) {
+    const feature = this.features.get(fid)!
+    feature.geometry.coordinates = this.leafletService.removeInnerRings(feature.geometry.coordinates as L.PointTuple[][]);
+    this.updateFeatureLayer(fid, openPopup);
+  }
+
+  private removeAllInnerRings(): void {
+    const featuresWithInnerRing: Feature<Polygon, any>[] = [];
+
+    for (const feature of this.features.values()) {
+      if (feature.geometry.coordinates.length > 1) {
+        featuresWithInnerRing.push(JSON.parse(JSON.stringify(feature)));
+        this.removeInnerRings(feature.properties.FID);
+      }
+    }
+
+    this.addToFeatureEditUndoStack(featuresWithInnerRing);
   }
 
   private removeFeature(fid: number) {
