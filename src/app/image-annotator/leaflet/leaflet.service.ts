@@ -123,6 +123,7 @@ export class LeafletService {
   }
 
   simplifyFeature(feature: Feature<Polygon, any>, tolerance: number = 1): Feature<Polygon, any> {
+    // turf simplify uses the Ramer-Douglas-Peucker algorithm.
     return simplify(feature, {
       tolerance: tolerance
     });
