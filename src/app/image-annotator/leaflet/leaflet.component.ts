@@ -195,7 +195,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private createFeatureGradePopupHtml(fid: number): HTMLElement {
     const feature = this.features.get(fid)!;
-    const gradingContainer = L.DomUtil.create('div', 'mb-3 container');
+    const gradingContainer = L.DomUtil.create('div', 'mb-3');
 
     // Segment score
 
@@ -203,7 +203,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     scoreLabel.htmlFor = `segment-score-${fid}`;
     scoreLabel.innerHTML = 'Segment score';
 
-    const scoreContainer = L.DomUtil.create('div', 'input-group mb-3', gradingContainer);
+    const scoreContainer = L.DomUtil.create('div', 'input-group mb-2', gradingContainer);
 
     const scoreInput = L.DomUtil.create('input', 'form-control', scoreContainer) as HTMLInputElement;
     scoreInput.type = 'number';
@@ -215,7 +215,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       const scoreInput = event.target as HTMLInputElement;
       this.setFeatureScore(fid, scoreInput.value);
     }
-    if (feature.properties.score) {
+    if (feature.properties.score != null) {
       scoreInput.value = feature.properties.score.toString();
     }
 
@@ -230,10 +230,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     truePositive.id = `grading-radios-truepositive-${fid}`;
     truePositive.checked = feature.properties.grade === FeatureGrade.TruePositive;
 
-    const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-success', gradingContainer) as HTMLLabelElement;
+    const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-success me-2', gradingContainer) as HTMLLabelElement;
     truePositiveLabel.innerHTML = 'True positive';
     truePositiveLabel.htmlFor = truePositive.id;
-    truePositiveLabel.style.marginInlineEnd = '1rem';
 
     // False positives
 
@@ -254,7 +253,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       } else if (falsePositive.checked) {
         grade = FeatureGrade.FalsePositive;
       }
-      if (grade) {
+      if (grade != null) {
         this.setFeatureGrade(fid, grade);
       }
     };
