@@ -271,12 +271,18 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     falsePositive.innerHTML = 'False positive';
     falsePositive.selected = feature.properties.grade === FeatureGrade.FalsePositive;
 
+    const falseNegative = L.DomUtil.create('option', undefined, gradeSelect) as HTMLOptionElement;
+    falseNegative.innerHTML = 'False negative';
+    falseNegative.selected = feature.properties.grade === FeatureGrade.FalseNegative;
+
     gradeSelect.oninput = () => {
       let grade;
       if (truePositive.selected) {
         grade = FeatureGrade.TruePositive;
       } else if (falsePositive.selected) {
         grade = FeatureGrade.FalsePositive;
+      } else if (falseNegative.selected) {
+        grade = FeatureGrade.FalseNegative;
       }
       if (grade != null) {
         this.setFeatureGrade(fid, grade);
@@ -430,8 +436,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private determineFeatureStyle(feature: Feature<Polygon, any>): L.PathOptions {
     let color;
     switch (feature.properties.grade) {
-      case FeatureGrade.TruePositive: color = '#198754'; break;
+      case FeatureGrade.TruePositive:  color = '#198754'; break;
       case FeatureGrade.FalsePositive: color = '#dc3545'; break;
+      case FeatureGrade.FalseNegative: color = '#fd7e14'; break;
     }
     if (color) {
       return { color: color };
