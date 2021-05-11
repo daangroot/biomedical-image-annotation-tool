@@ -550,7 +550,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       if (feature.geometry === null) {
         // Feature was created before undo, so remove it.
         this.removeFeature(feature.properties.FID);
-        return;
+        continue;
       }
 
       const fid = feature.properties.FID;
