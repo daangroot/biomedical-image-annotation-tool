@@ -123,12 +123,13 @@ export class LeafletService {
   }
 
   simplifyFeature(feature: Feature<Polygon, any>, tolerance: number = 1): Feature<Polygon, any> {
+    // turf simplify uses the Ramer-Douglas-Peucker algorithm.
     return simplify(feature, {
       tolerance: tolerance
     });
   }
 
-  removeInnerPolygons(polygon: L.PointTuple[][]): L.PointTuple[][] {
+  removeInnerRings(polygon: L.PointTuple[][]): L.PointTuple[][] {
     return [polygon[0]];
   }
 
@@ -244,11 +245,21 @@ export class LeafletService {
     return this.createButtonControl(button, 'topleft');
   }
 
-  createRemoveAllInnerPolygonsControl(onClick: Function): L.Control {
+  createSimplifyAllFeaturesControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Remove all inner polygons');
-    button.style.backgroundImage = 'url("/assets/delete_inner_polygons.png")';
+    button.setAttribute('title', 'Simplify all polygons');
+    button.style.backgroundImage = 'url("/assets/simplify.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createRemoveAllInnerRingsControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Remove all inner rings');
+    button.style.backgroundImage = 'url("/assets/delete_inner_rings.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
     return this.createButtonControl(button, 'topleft');
