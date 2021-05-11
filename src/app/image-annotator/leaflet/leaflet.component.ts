@@ -103,7 +103,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.addTileLayer(this.maskMap);
 
     this.geoJsonLayer = L.geoJSON(undefined, {
-      coordsToLatLng: (coords) => this.leafletService.toLatLng(coords as L.PointTuple),
+      coordsToLatLng: (coords: L.PointTuple) => this.leafletService.toLatLng(coords),
       onEachFeature: (feature: Feature<Polygon, any>, layer) => this.onEachFeature(feature, layer),
       // @ts-ignore
       snapIgnore: true
@@ -179,8 +179,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.removeFeature(fid);
     };
 
-    const hasInnerPolygon = (feature.geometry as any).coordinates.length > 1;
-    if (hasInnerPolygon) {
+    if (feature.geometry.coordinates.length > 1) {
       const deleteInnerContainer = L.DomUtil.create('div', 'mb-1', container);
       const deleteInnerButton = L.DomUtil.create('button', 'btn btn-danger', deleteInnerContainer);
       deleteInnerButton.innerHTML = 'Remove inner polygon(s)';
@@ -189,7 +188,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
         this.removeInnerPolygons(fid, true);
       };
     }
-
 
     return container;
   }
@@ -327,17 +325,17 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private handleMaskChange(maskId: string | null): void {
     this.selectedMaskId = maskId;
-    this.updateGeoJson(maskId);
+    this.updateGeoJson();
     this.updateTopLeftControls();
   }
 
-  private updateGeoJson(maskId: string | null): void {
+  private updateGeoJson(): void {
     this.features = new Map();
     this.featureLayers = new Map();
     this.geoJsonLayer.clearLayers();
 
-    if (maskId !== null) {
-      this.apiService.fetchGeoJson(this.bioImageInfo.id, maskId!).subscribe(
+    if (this.selectedMaskId !== null) {
+      this.apiService.fetchGeoJson(this.bioImageInfo.id, this.selectedMaskId).subscribe(
         features => this.geoJsonLayer.addData(features as any),
         error => window.alert('Failed to retrieve polygons from server!')
       )
@@ -399,16 +397,15 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       const copy = JSON.parse(JSON.stringify(feature));
       copy.properties = {};
       features = [copy];
-    } else if (feature.geometry.type === 'MultiPolygon') {
+    } else {
       features = this.leafletService.splitMultiPolygonFeature(feature as Feature<MultiPolygon, any>);
     }
 
     for (const feature of features) {
-      feature.geometry.coordinates = feature.geometry.coordinates.map(ring =>
-        ring.map(latLng => {
-          const point = this.maskMap.project([latLng[1], latLng[0]], this.maxNativeZoom);
-          return [point.x, point.y];
-        })
+      feature.geometry.coordinates = feature.geometry.coordinates.map(
+        ring => ring.map(
+          latLng => this.leafletService.toPoint(L.latLng(latLng[1], latLng[0]))
+        )
       )
       this.geoJsonLayer.addData(feature);
 
@@ -446,13 +443,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private removeAllInnerPolygons(): void {
     const featuresWithInner: Feature<Polygon, any>[] = [];
 
-    this.features.forEach(feature => {
-      const hasInnerPolygon = (feature.geometry as any).coordinates.length > 1;
-      if (hasInnerPolygon) {
+    for (const feature of this.features.values()) {
+      if (feature.geometry.coordinates.length > 1) {
         featuresWithInner.push(JSON.parse(JSON.stringify(feature)));
         this.removeInnerPolygons(feature.properties.FID);
       }
-    })
+    }
 
     this.addToFeatureEditUndoStack(featuresWithInner);
   }
@@ -474,7 +470,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     const prevFeatures = this.featureEditUndoStack.pop()!;
-    prevFeatures.forEach(feature => {
+    for (const feature of prevFeatures) {
       if (feature.geometry === null) {
         // Feature was created before undo, so remove it.
         this.removeFeature(feature.properties.FID);
@@ -485,9 +481,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.features.set(fid, feature);
       this.updateFeatureLayer(fid);
 
-      const layer = this.featureLayers.get(fid) as any;
+      const layer: any = this.featureLayers.get(fid);
       if (prevFeatures.length === 1) {
-        const bounds = layer.getBounds() as L.LatLngBounds;
+        const bounds: L.LatLngBounds = layer.getBounds();
         this.maskMap.panTo(bounds.getCenter());
       }
       layer.setStyle({
@@ -496,7 +492,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       setTimeout(() => {
         this.geoJsonLayer.resetStyle(layer);
       }, 1500);
-    })
+    }
     
     if (this.featureEditUndoStack.length === 0) {
       this.featureEditUndoControl.remove();
