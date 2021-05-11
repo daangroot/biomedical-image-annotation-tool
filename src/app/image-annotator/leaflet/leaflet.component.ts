@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { HeaderService } from '../../header/header.service';
 import { ApiService } from '../../services/api.service';
 import { ImageInfo } from '../../types/image-info.type';
+import { FeatureGrade } from '../../types/feature-grade.type';
 import { MaskManagerService } from '../mask-manager/mask-manager.service';
 import { LeafletService } from './leaflet.service';
 
@@ -193,7 +194,33 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createFeatureGradePopupHtml(fid: number): HTMLElement {
+    const feature = this.features.get(fid)!;
     const gradingContainer = L.DomUtil.create('div', 'mb-3 container');
+
+    // Segment score
+
+    const scoreLabel = L.DomUtil.create('label', 'form-label', gradingContainer) as HTMLLabelElement;
+    scoreLabel.htmlFor = `segment-score-${fid}`;
+    scoreLabel.innerHTML = 'Segment score';
+
+    const scoreContainer = L.DomUtil.create('div', 'input-group mb-3', gradingContainer);
+
+    const scoreInput = L.DomUtil.create('input', 'form-control', scoreContainer) as HTMLInputElement;
+    scoreInput.type = 'number';
+    scoreInput.min = '0';
+    scoreInput.max = '100';
+    scoreInput.placeholder = 'Segment score';
+    scoreInput.id = `segment-score-${fid}`;
+    scoreInput.oninput = (event: Event) => {
+      const scoreInput = event.target as HTMLInputElement;
+      this.setFeatureScore(fid, scoreInput.value);
+    }
+    if (feature.properties.score) {
+      scoreInput.value = feature.properties.score.toString();
+    }
+
+    const scoreText = L.DomUtil.create('span', 'input-group-text', scoreContainer);
+    scoreText.innerHTML = '%';
 
     // True positives
 
@@ -201,7 +228,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     truePositive.type = 'radio';
     truePositive.name = `grading-radios-${fid}`;
     truePositive.id = `grading-radios-truepositive-${fid}`;
-    truePositive.onchange = () => this.setFeatureGrade(fid, truePositive.checked);
+    truePositive.checked = feature.properties.grade === FeatureGrade.TruePositive;
 
     const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-success', gradingContainer) as HTMLLabelElement;
     truePositiveLabel.innerHTML = 'True positive';
@@ -214,18 +241,42 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     falsePositive.type = 'radio';
     falsePositive.name = `grading-radios-${fid}`;
     falsePositive.id = `grading-radios-falsepositive-${fid}`;
-    falsePositive.onchange = () => this.setFeatureGrade(fid, truePositive.checked);
+    falsePositive.checked = feature.properties.grade === FeatureGrade.FalsePositive;
 
     const falsePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-danger', gradingContainer) as HTMLLabelElement;
     falsePositiveLabel.innerHTML = 'False positive';
     falsePositiveLabel.htmlFor = falsePositive.id;
 
+    const onChange = () => {
+      let grade;
+      if (truePositive.checked) {
+        grade = FeatureGrade.TruePositive;
+      } else if (falsePositive.checked) {
+        grade = FeatureGrade.FalsePositive;
+      }
+      if (grade) {
+        this.setFeatureGrade(fid, grade);
+      }
+    };
+
+    truePositive.onchange = onChange;
+    falsePositive.onchange = onChange;
+
     return gradingContainer;
   }
 
-  private setFeatureGrade(fid: number, truePositive: boolean): void {
+  private setFeatureScore(fid: number, scoreString: string): void {
+    try {
+      const score = parseInt(scoreString);
+      const feature = this.features.get(fid)!;
+      feature.properties.score = score;
+    }
+    catch {}
+  }
+
+  private setFeatureGrade(fid: number, grade: FeatureGrade): void {
     const feature = this.features.get(fid)!;
-    feature.properties.grade = truePositive ? 'truePositive' : 'falsePositive';
+    feature.properties.grade = grade;
   }
 
   private initControls(): void {
