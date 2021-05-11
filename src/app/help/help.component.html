@@ -6,12 +6,81 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <h6>How to use this tool</h6>
-                <p>On the main screen, images can be uploaded. These will then be converted to a suitable
-                format to allow deep zooming. This conversion progress may take some time.</p>
-                <p>When an image has been processed, it will appear in the <em>Uploaded images</em>
-                list. From there, it can be opened by clicking its thumbnail. This will take you to
-                the annotation screen.</p>
+                <h6>The main screen</h6>
+                <p>
+                    On the main screen, images can be uploaded. These will then be converted to a suitable
+                    format to allow deep zooming. This conversion progress may take some time.
+                </p>
+                <p>
+                    When an image has been processed, it will appear in the <em>Uploaded images</em>
+                    list. From there, it can be opened by clicking its thumbnail. This will take you to
+                    the annotation screen.
+                </p>
+
+                <h6>The annotation screen</h6>
+                <p>
+                    The annotation screen shows the selected image, initially in full screen.
+                    In the bottom-left corner, the name of the selected image is shown.
+                </p>
+                <p>
+                    The viewer can be moved around by clicking and dragging the mouse cursor, or by using
+                    the arrow keys.
+                </p>
+                <p>
+                    You can zoom in by scrolling, or using the zoom controls in the bottom-right
+                    corner of the viewer.
+                </p>
+                <p>In the top-left corner is a list of image controls:</p>
+                <table class="table table-borderless table-striped mb-3">
+                    <tbody>
+                        <tr>
+                            <td><img src="/assets/expand_less.png"></td>
+                            <td>Hide/show all buttons</td>
+                        </tr>
+                        <tr>
+                            <td><img src="/assets/swap_horiz.png"></td>
+                            <td>Show the image in a split viewer, for easier viewing when annotating.</td>
+                        </tr>
+                        <tr>
+                            <td><img src="/assets/layers.png"></td>
+                            <td>Open the mask manager, where segmentation masks can be added and managed.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h6>The mask manager</h6>
+                <p>
+                    Clicking the <em>Set mask</em> button opens the mask manager. From there,
+                    a segmentation mask can be uploaded. This should not take long.
+                </p>
+                <p>
+                    Once a mask has been uploaded, it can be applied by clicking its thumbnail.
+                    This shows the mask in an overlay on the image.
+                </p>
+                <p>It also enables several editing tools in the top-left corner:</p>
+                <table class="table table-borderless table-striped mb-3">
+                    <tbody>
+                        <tr>
+                            <td><img src="/assets/polygon.png"></td>
+                            <td>Draw a new segment using a polygon drawing tool.</td>
+                        </tr>
+                        <tr>
+                            <td><img src="/assets/cut.png"></td>
+                            <td>Cut (parts of) segments using a scissor tool.</td>
+                        </tr>
+                        <tr>
+                            <td><img src="/assets/simplify.png"></td>
+                            <td>
+                                Simplify all segments' polygons. This will reduce the number
+                                of vertices and edges.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><img src="/assets/delete_inner_rings.png"></td>
+                            <td>Remove all inner rings (holes) from segments.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
