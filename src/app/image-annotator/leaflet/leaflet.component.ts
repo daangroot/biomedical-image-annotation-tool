@@ -124,6 +124,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.geoJsonLayer = L.geoJSON(undefined, {
       coordsToLatLng: (coords: L.PointTuple) => this.leafletService.toLatLng(coords),
       onEachFeature: (feature: Feature<Polygon, any>, layer) => this.onEachFeature(feature, layer),
+      style: (feature: any) => this.determineFeatureStyle(feature),
       // @ts-ignore
       snapIgnore: true
     }).addTo(this.maskMap);
@@ -419,6 +420,18 @@ export class LeafletComponent implements OnInit, AfterViewInit {
         error => window.alert('Failed to retrieve polygons from server!')
       )
     }
+  }
+
+  private determineFeatureStyle(feature: Feature<Polygon, any>): L.PathOptions {
+    let color;
+    switch (feature.properties.grade) {
+      case FeatureGrade.TruePositive: color = '#198754'; break;
+      case FeatureGrade.FalsePositive: color = '#dc3545'; break;
+    }
+    if (color) {
+      return { color: color };
+    }
+    return {};
   }
 
   private onEachFeature(feature: Feature<Polygon, any>, layer: L.Layer): void {
