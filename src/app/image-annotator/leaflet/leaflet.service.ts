@@ -127,6 +127,26 @@ export class LeafletService {
     })
   }
 
+  createShowControlsControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Show buttons');
+    button.style.backgroundImage = 'url("/assets/expand_more.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createHideControlsControl(onClick: Function): L.Control {
+    const button = L.DomUtil.create('a');
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Hide buttons');
+    button.style.backgroundImage = 'url("/assets/expand_less.png")';
+    button.style.backgroundSize = '24px 24px';
+    L.DomEvent.disableClickPropagation(button);
+    return this.createButtonControl(button, 'topleft');
+  }
+
   createSplitScreenControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();

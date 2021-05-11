@@ -23,6 +23,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private baseMap!: L.Map;
   private maskMap!: L.Map;
   private geoJsonLayer!: L.GeoJSON;
+  private showTopLeftControlsControl!: L.Control;
+  private hideTopLeftControlsControl!: L.Control;
+  private splitScreenControl!: L.Control;
+  private maskControl!: L.Control;
   private drawFeatureControl!: L.Control;
   private cancelDrawFeatureControl!: L.Control;
   private cutFeatureControl!: L.Control;
@@ -35,6 +39,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private neMax!: L.PointTuple;
   private readonly tileSize: number = 128;
   private maxNativeZoom!: number;
+  private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
   private maxFid: number = -1;
@@ -283,9 +288,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       position: 'bottomright'
     }).addTo(this.maskMap);
 
-    this.leafletService.createSplitScreenControl(() => this.toggleBaseMap()).addTo(this.maskMap);
-    this.leafletService.createMaskControl().addTo(this.maskMap);
-
+    this.splitScreenControl = this.leafletService.createSplitScreenControl(() => this.toggleBaseMap());
+    this.maskControl = this.leafletService.createMaskControl();
+    this.showTopLeftControlsControl = this.leafletService.createShowControlsControl(() => this.toggleTopLeftControls());
+    this.hideTopLeftControlsControl = this.leafletService.createHideControlsControl(() => this.toggleTopLeftControls());
     this.drawFeatureControl = this.leafletService.createDrawFeatureControl(() => this.enableDrawMode());
     this.cancelDrawFeatureControl = this.leafletService.createCancelDrawFeatureControl(() => this.disableDrawMode());
     this.cutFeatureControl = this.leafletService.createCutFeatureControl(() => this.enableCutMode());
@@ -294,14 +300,29 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
 
     this.leafletService.createTextControl(this.bioImageInfo.originalName, 'bottomleft').addTo(this.maskMap);
+
+    this.updateTopLeftControls();
   }
 
   private updateTopLeftControls(): void {
+    this.showTopLeftControlsControl.remove();
+    this.hideTopLeftControlsControl.remove();
+    this.splitScreenControl.remove();
+    this.maskControl.remove();
     this.drawFeatureControl.remove();
     this.cancelDrawFeatureControl.remove();
     this.cutFeatureControl.remove();
     this.cancelCutFeatureControl.remove();
     this.removeAllInnerPolygonsControl.remove();
+
+    if (!this.showTopLeftControls) {
+      this.showTopLeftControlsControl.addTo(this.maskMap);
+      return;
+    }
+
+    this.hideTopLeftControlsControl.addTo(this.maskMap);
+    this.splitScreenControl.addTo(this.maskMap);
+    this.maskControl.addTo(this.maskMap);
 
     if (this.selectedMaskId === null) {
       return;
@@ -318,6 +339,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     this.removeAllInnerPolygonsControl.addTo(this.maskMap);
+  }
+
+  private toggleTopLeftControls() {
+    this.showTopLeftControls = !this.showTopLeftControls;
+    this.updateTopLeftControls();
   }
 
   private enableDrawMode(): void {
