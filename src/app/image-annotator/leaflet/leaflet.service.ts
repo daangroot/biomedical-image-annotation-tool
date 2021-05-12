@@ -184,22 +184,22 @@ export class LeafletService {
     return this.createButtonControl(button, 'topleft');
   }
 
-  createSplitScreenControl(onClick: Function): L.Control {
+  createMaskMenuControl(): L.Control {
     const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Split screen');
-    button.style.backgroundImage = 'url("/assets/swap_horiz.png")';
+    button.setAttribute('data-bs-toggle', 'offcanvas');
+    button.setAttribute('href', '#mask-manager-offcanvas');
+    button.setAttribute('title', 'Open mask menu');
+    button.style.backgroundImage = 'url("/assets/menu.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
     return this.createButtonControl(button, 'topleft');
   }
 
-  createMaskControl(): L.Control {
+  createSplitScreenControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
-    button.setAttribute('data-bs-toggle', 'offcanvas');
-    button.setAttribute('href', '#mask-manager-offcanvas');
-    button.setAttribute('title', 'Set mask');
-    button.style.backgroundImage = 'url("/assets/layers.png")';
+    button.onclick = () => onClick();
+    button.setAttribute('title', 'Split screen');
+    button.style.backgroundImage = 'url("/assets/swap_horiz.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
     return this.createButtonControl(button, 'topleft');
