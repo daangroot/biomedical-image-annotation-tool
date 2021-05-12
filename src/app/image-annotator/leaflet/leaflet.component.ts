@@ -201,24 +201,23 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       };
     }
 
-    const innerRingCount = feature.geometry.coordinates.length - 1;
-    if (innerRingCount > 0) {
-      const deleteInnerContainer = L.DomUtil.create('div', 'mb-2', container);
-      const deleteInnerButton = L.DomUtil.create('button', 'btn btn-danger', deleteInnerContainer);
-      deleteInnerButton.innerHTML = innerRingCount === 1 ? 'Remove inner ring' : 'Remove inner rings';
-      deleteInnerButton.onclick = () => {
-        this.addToFeatureEditUndoStack([feature]);
-        this.removeInnerRings(fid, true);
-      };
-    }
-
     const deleteContainer = L.DomUtil.create('div', 'mb-2', container);
-    const deleteButton = L.DomUtil.create('button', 'btn btn-danger', deleteContainer);
+    const deleteButton = L.DomUtil.create('button', 'btn btn-danger me-2', deleteContainer);
     deleteButton.innerHTML = 'Remove';
     deleteButton.onclick = () => {
       this.addToFeatureEditUndoStack([feature]);
       this.removeFeature(fid);
     };
+
+    const innerRingCount = feature.geometry.coordinates.length - 1;
+    if (innerRingCount > 0) {
+      const deleteInnerButton = L.DomUtil.create('button', 'btn btn-danger', deleteContainer);
+      deleteInnerButton.innerHTML = innerRingCount === 1 ? 'Remove hole' : 'Remove holes';
+      deleteInnerButton.onclick = () => {
+        this.addToFeatureEditUndoStack([feature]);
+        this.removeInnerRings(fid, true);
+      };
+    }
 
     return container;
   }
@@ -454,9 +453,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     let fid = 0;
     if (feature.properties.FID == null) {
       fid = this.maxFid + 1;
-      feature.properties = {
-        FID: fid
-      };
+      feature.properties.FID = fid;
     } else {
       fid = feature.properties.FID;
     }

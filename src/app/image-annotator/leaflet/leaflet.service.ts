@@ -258,7 +258,7 @@ export class LeafletService {
   createRemoveAllInnerRingsControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Remove all inner rings');
+    button.setAttribute('title', 'Remove all holes');
     button.style.backgroundImage = 'url("/assets/delete_inner_rings.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
