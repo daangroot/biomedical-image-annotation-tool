@@ -133,19 +133,6 @@ export class LeafletService {
     return [polygon[0]];
   }
 
-  createTextControl(text: string, position: L.ControlPosition): L.Control {
-    const Control = L.Control.extend({
-      onAdd(map: L.Map) {
-        const container: HTMLElement = L.DomUtil.create('div');
-        container.innerHTML = text;
-        return container;
-      },
-    });
-    return new Control({
-      position: position
-    })
-  }
-
   createButtonControl(button: HTMLElement, position: L.ControlPosition): L.Control {
     const Control = L.Control.extend({
       onAdd(map: L.Map) {

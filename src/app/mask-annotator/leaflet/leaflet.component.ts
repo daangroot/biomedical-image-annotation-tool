@@ -149,8 +149,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       position: 'bottomright'
     }).addTo(this.maskMap);
 
-    this.leafletService.createTextControl(this.bioImageInfo.originalName, 'bottomleft').addTo(this.maskMap);
-
     this.showTopLeftControlsControl = this.leafletService.createShowControlsControl(() => this.toggleTopLeftControls());
     this.hideTopLeftControlsControl = this.leafletService.createHideControlsControl(() => this.toggleTopLeftControls());
     this.splitScreenControl = this.leafletService.createSplitScreenControl(() => this.toggleBaseMap());
