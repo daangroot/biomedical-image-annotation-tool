@@ -208,7 +208,7 @@ export class LeafletService {
   createDrawFeatureControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Draw polygon');
+    button.setAttribute('title', 'Draw segment');
     button.style.backgroundImage = 'url("/assets/polygon.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
@@ -218,7 +218,7 @@ export class LeafletService {
   createCancelDrawFeatureControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Cancel polygon drawing');
+    button.setAttribute('title', 'Cancel segment drawing');
     button.style.backgroundImage = 'url("/assets/close.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
@@ -228,7 +228,7 @@ export class LeafletService {
   createCutFeatureControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Cut polygon');
+    button.setAttribute('title', 'Cut segment');
     button.style.backgroundImage = 'url("/assets/cut.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
@@ -238,7 +238,7 @@ export class LeafletService {
   createCancelCutFeatureControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Cancel polygon cutting');
+    button.setAttribute('title', 'Cancel segment cutting');
     button.style.backgroundImage = 'url("/assets/close.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
@@ -248,7 +248,7 @@ export class LeafletService {
   createSimplifyAllFeaturesControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Simplify all polygons');
+    button.setAttribute('title', 'Simplify all segments');
     button.style.backgroundImage = 'url("/assets/simplify.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
@@ -268,7 +268,7 @@ export class LeafletService {
   createFeatureEditUndoControl(onClick: Function): L.Control {
     const button = L.DomUtil.create('a');
     button.onclick = () => onClick();
-    button.setAttribute('title', 'Undo');
+    button.setAttribute('title', 'Undo last operation');
     button.style.backgroundImage = 'url("/assets/undo.png")';
     button.style.backgroundSize = '24px 24px';
     L.DomEvent.disableClickPropagation(button);
