@@ -140,8 +140,6 @@ export class LeafletService {
         container.innerHTML = text;
         return container;
       },
-
-      onRemove(map: L.Map) { },
     });
     return new Control({
       position: position
@@ -151,127 +149,83 @@ export class LeafletService {
   createButtonControl(button: HTMLElement, position: L.ControlPosition): L.Control {
     const Control = L.Control.extend({
       onAdd(map: L.Map) {
-        button.setAttribute('role', 'button');
         const container: HTMLElement = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
         container.appendChild(button);
         return container;
       },
-
-      onRemove(map: L.Map) { },
     });
     return new Control({
       position: position
     })
   }
 
-  createShowControlsControl(onClick: Function): L.Control {
+  createButtonElement(title: string, image: string, onClick?: Function): HTMLElement {
     const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Show buttons');
-    button.style.backgroundImage = 'url("/assets/expand_more.png")';
+    button.setAttribute('role', 'button');
+    button.title = title;
+    button.style.backgroundImage = `url("/assets/${image}.png")`;
     button.style.backgroundSize = '24px 24px';
+    if (onClick) {
+      button.onclick = () => onClick();
+    }
     L.DomEvent.disableClickPropagation(button);
+    return button;
+  }
+
+  createShowControlsControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Show buttons', 'expand_more', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createHideControlsControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Hide buttons');
-    button.style.backgroundImage = 'url("/assets/expand_less.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Hide buttons', 'expand_less', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createMaskMenuControl(): L.Control {
-    const button = L.DomUtil.create('a');
+    const button = this.createButtonElement('Open mask menu', 'menu');
     button.setAttribute('data-bs-toggle', 'offcanvas');
     button.setAttribute('href', '#mask-manager-offcanvas');
-    button.setAttribute('title', 'Open mask menu');
-    button.style.backgroundImage = 'url("/assets/menu.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
     return this.createButtonControl(button, 'topleft');
   }
 
   createSplitScreenControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Split screen');
-    button.style.backgroundImage = 'url("/assets/swap_horiz.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Split screen', 'swap_horiz', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createDrawFeatureControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Draw segment');
-    button.style.backgroundImage = 'url("/assets/polygon.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Draw segment', 'polygon', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createCancelDrawFeatureControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Cancel segment drawing');
-    button.style.backgroundImage = 'url("/assets/close.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Cancel segment drawing', 'close', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createCutFeatureControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Cut segment');
-    button.style.backgroundImage = 'url("/assets/cut.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Cut segment', 'cut', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createCancelCutFeatureControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Cancel segment cutting');
-    button.style.backgroundImage = 'url("/assets/close.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Cancel segment cutting', 'close', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createSimplifyAllFeaturesControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Simplify all segments');
-    button.style.backgroundImage = 'url("/assets/simplify.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Simplify all segments', 'simplify', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createRemoveAllInnerRingsControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Remove all holes');
-    button.style.backgroundImage = 'url("/assets/delete_inner_rings.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Remove all holes', 'delete_inner_rings', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
   createFeatureEditUndoControl(onClick: Function): L.Control {
-    const button = L.DomUtil.create('a');
-    button.onclick = () => onClick();
-    button.setAttribute('title', 'Undo last operation');
-    button.style.backgroundImage = 'url("/assets/undo.png")';
-    button.style.backgroundSize = '24px 24px';
-    L.DomEvent.disableClickPropagation(button);
+    const button = this.createButtonElement('Undo last operation', 'undo', onClick);
     return this.createButtonControl(button, 'topright');
   }
 }
