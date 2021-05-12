@@ -1,0 +1,24 @@
+#leaflet-viewer-container {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  width: 100%;
+  background-color: #f8f9fa;
+}
+
+.leaflet-viewer {
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-viewer.basemap-visible {
+  width: calc(50% - 0.25rem);
+}
+
+#leaflet-viewer-base {
+  display: none;
+}
+
+#leaflet-viewer-base.basemap-visible {
+  display: block;
+}

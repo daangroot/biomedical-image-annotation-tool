@@ -12,7 +12,7 @@ export class ImageListComponent implements OnInit {
   environment = environment;
   imageInfos: ImageInfo[] = [];
   isLoading: boolean = false;
-  isDataLoaded: boolean = true;
+  isDataLoaded: boolean = false;
   deletedImageId: string | null = null;
 
   constructor(private apiService: ApiService) { }
@@ -32,13 +32,11 @@ export class ImageListComponent implements OnInit {
           this.isLoading = false;
           this.isDataLoaded = true;
         },
-        () => this.isLoading = false
+        error => this.isLoading = false
       )
   }
 
-  deleteImage(event: MouseEvent, id: string): void {
-    event.preventDefault();
-
+  deleteImage(id: string): void {
     if (!window.confirm("Are you sure you want to delete this image?"))
       return;
 

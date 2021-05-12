@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import {  Component,  OnInit } from '@angular/core';
 import { HeaderService } from './header.service';
 
 @Component({
@@ -6,16 +6,22 @@ import { HeaderService } from './header.service';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent implements OnInit, AfterViewInit {
-  @ViewChild('header')
-  private header!: ElementRef;
-
+export class HeaderComponent implements OnInit {
+  bioImageId: string | null = null;
+  bioImageName: string | null = null;
+  maskImageId: string | null = null;
+  maskImageName: string | null = null;
+  
   constructor(private headerService: HeaderService) { }
 
   ngOnInit(): void {
-  }
-
-  ngAfterViewInit(): void {
-    this.headerService.headerHeight = this.header.nativeElement.offsetHeight;
+    this.headerService.bioImageData$.subscribe(data => {
+      this.bioImageId = data[0];
+      this.bioImageName = data[1];
+    })
+    this.headerService.maskImageData$.subscribe(data => {
+      this.maskImageId = data[0];
+      this.maskImageName = data[1];
+    })
   }
 }

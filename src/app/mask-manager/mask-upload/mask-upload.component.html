@@ -1,0 +1,6 @@
+<div id="mask-upload" class="mb-4">
+  <h4>Add mask</h4>
+  <input class="form-control mb-2" type="file" id="mask-input" (change)="fileChange($event)">
+  <button type="button" class="btn btn-primary" (click)="uploadMask()" *ngIf="file && !isUploading">Upload mask</button>
+  <div class="spinner-border text-primary" role="status" *ngIf="isUploading"></div>
+</div>

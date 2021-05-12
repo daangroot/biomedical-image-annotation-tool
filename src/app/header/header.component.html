@@ -1,6 +1,15 @@
-<nav class="navbar navbar-light bg-light" #header>
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Annotatool</a>
-    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#help-modal">Help</button>
-  </div>
+<nav id="navbar" class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">Annotatool</a>
+  <ul class="navbar-nav">
+    <li class="nav-item" *ngIf="bioImageId">
+      <a class="nav-link" href="/images/{{ bioImageId }}">{{ bioImageName }}</a>
+    </li>
+    <li class="nav-item" *ngIf="maskImageId">
+      <span class="nav-link">></span>
+    </li>
+    <li class="nav-item" *ngIf="maskImageId">
+      <a class="nav-link" href="/images/{{ bioImageId }}/masks/{{ maskImageId }}">{{ maskImageName }}</a>
+    </li>
+  </ul>
+  <button type="button" id="help-button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#help-modal">Help</button>
 </nav>

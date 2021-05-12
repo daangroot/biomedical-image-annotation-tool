@@ -9,7 +9,11 @@ const routes: Routes = [
   },
   {
     path: 'images/:imageId',
-    loadChildren: () => import('./image-annotator/image-annotator.module').then(m => m.ImageAnnotatorModule)
+    loadChildren: () => import('./mask-manager/mask-manager.module').then(m => m.MaskManagerModule)
+  },
+  {
+    path: 'images/:imageId/masks/:maskId',
+    loadChildren: () => import('./mask-annotator/mask-annotator.module').then(m => m.MaskAnnotatorModule)
   }
 ];
 
