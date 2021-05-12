@@ -228,4 +228,9 @@ export class LeafletService {
     const button = this.createButtonElement('Undo last operation', 'undo', onClick);
     return this.createButtonControl(button, 'topright');
   }
+
+  createSetOverallScoreControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Rate overall accuracy', 'grade', onClick);
+    return this.createButtonControl(button, 'topleft');
+  }
 }
