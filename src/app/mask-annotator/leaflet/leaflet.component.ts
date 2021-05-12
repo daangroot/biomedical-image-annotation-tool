@@ -26,6 +26,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private neMax!: L.PointTuple;
   private maxNativeZoom!: number;
   private geoJsonLayer!: L.GeoJSON;
+
   private showTopLeftControlsControl!: L.Control;
   private hideTopLeftControlsControl!: L.Control;
   private splitScreenControl!: L.Control;
@@ -36,6 +37,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private simplifyAllPolygonsControl!: L.Control;
   private removeAllInnerRingsControl!: L.Control;
   private featureEditUndoControl!: L.Control;
+  private setOverallScoreControl!: L.Control;
+
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
@@ -43,6 +46,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private features: Map<number, Feature<Polygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
   private featureEditUndoStack: Feature<Polygon, any>[][] = [];
+
+  private overallScore: number | null = null;
+
   private readonly tileSize: number = 128;
   private readonly maxSimplifyTolerance: number = 10000;
 
@@ -155,6 +161,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.simplifyAllPolygonsControl = this.leafletService.createSimplifyAllFeaturesControl(() => this.simplifyAllFeatures());
     this.removeAllInnerRingsControl = this.leafletService.createRemoveAllInnerRingsControl(() => this.removeAllInnerRings());
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
+    this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
 
     this.updateTopLeftControls();
   }
@@ -169,6 +176,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.cancelCutFeatureControl.remove();
     this.simplifyAllPolygonsControl.remove();
     this.removeAllInnerRingsControl.remove();
+    this.setOverallScoreControl.remove();
 
     if (!this.showTopLeftControls) {
       this.showTopLeftControlsControl.addTo(this.maskMap);
@@ -190,6 +198,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.simplifyAllPolygonsControl.addTo(this.maskMap);
     this.removeAllInnerRingsControl.addTo(this.maskMap);
+    this.setOverallScoreControl.addTo(this.maskMap);
   }
 
   private toggleTopLeftControls() {
@@ -322,7 +331,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     const scoreLabel = L.DomUtil.create('label', 'form-label', gradingContainer) as HTMLLabelElement;
     scoreLabel.htmlFor = `segment-score-${fid}`;
-    scoreLabel.innerHTML = 'Segment score';
+    scoreLabel.innerHTML = 'Segment accuracy';
 
     const scoreContainer = L.DomUtil.create('div', 'input-group mb-2', gradingContainer);
 
@@ -616,5 +625,23 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     if (this.featureEditUndoStack.length === 0) {
       this.featureEditUndoControl.remove();
     }
+  }
+
+  private setOverallScore() {
+    const defaultText = this.overallScore !== null ? this.overallScore.toString() : '';
+    const value = window.prompt('How accurate is the segmentation overall? (0-100%)', defaultText);
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      const score = parseInt(value);
+
+      if (!isNaN(score) && score >= 0 && score <= 100) {
+        this.overallScore = score;
+      }
+    }
+    catch { }
   }
 }
