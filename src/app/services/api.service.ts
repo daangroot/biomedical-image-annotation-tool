@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Feature, Polygon } from 'geojson';
 import { ImageInfo } from '../types/image-info.type';
-import { MaskInfo } from '../types/mask-info.type';
 
 
 @Injectable({
@@ -33,12 +32,12 @@ export class ApiService {
     return this.http.delete(`${this.imagesDataUrl}/${id}`);
   }
 
-  fetchMaskInfo(bioImageId: string, maskId: string): Observable<MaskInfo> {
-    return this.http.get<MaskInfo>(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/info`);
+  fetchMaskInfo(bioImageId: string, maskId: string): Observable<ImageInfo> {
+    return this.http.get<ImageInfo>(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/info`);
   }
 
-  fetchMaskInfos(bioImageId: string): Observable<MaskInfo[]> {
-    return this.http.get<MaskInfo[]>(`${this.imagesDataUrl}/${bioImageId}/masks/info`);
+  fetchMaskInfos(bioImageId: string): Observable<ImageInfo[]> {
+    return this.http.get<ImageInfo[]>(`${this.imagesDataUrl}/${bioImageId}/masks/info`);
   }
 
   fetchFeatures(bioImageId: string, maskId: string): Observable<Feature<Polygon, any>[]> {
