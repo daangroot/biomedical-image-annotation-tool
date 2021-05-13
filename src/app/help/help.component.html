@@ -13,8 +13,19 @@
                 </p>
                 <p>
                     When an image has been processed, it will appear in the <em>Uploaded images</em>
-                    list. From there, it can be opened by clicking its thumbnail. This will take you to
-                    the annotation screen.
+                    list. From there, it can be opened by clicking its thumbnail. This will take you
+                    to the segmentation mask screen.
+                </p>
+
+                <h6>The segmentation mask screen</h6>
+                <p>
+                    On this screen a segmentation mask can be uploaded for the selected image.
+                    This will process the mask and add it to the <em>Uploaded masks</em> list.
+                    Processing a mask should not take long.
+                </p>
+                <p>
+                    Once processing is finished, the mask can be selected by clicking its thumbnail.
+                    This will take you to the annotation screen.
                 </p>
 
                 <h6>The annotation screen</h6>
@@ -23,43 +34,26 @@
                     In the bottom-left corner, the name of the selected image is shown.
                 </p>
                 <p>
-                    The viewer can be moved around by clicking and dragging the mouse cursor, or by using
-                    the arrow keys.
+                    The viewer can be moved around by clicking and dragging the mouse cursor,
+                    or by using the arrow keys. You can zoom in and out by scrolling, or using the
+                    zoom controls in the bottom-right corner of the viewer.
                 </p>
                 <p>
-                    You can zoom in by scrolling, or using the zoom controls in the bottom-right
-                    corner of the viewer.
+                    Image segments can be selected by clicking on them. This will open a popup,
+                    where the segment's accuracy can be rated. The segment can also be edited,
+                    simplified or removed.
                 </p>
-                <p>In the top-left corner is a list of image controls:</p>
+                <p>On the left-hand side is a list of image controls:</p>
                 <table class="table table-borderless table-striped mb-3">
                     <tbody>
                         <tr>
                             <td><img src="/assets/expand_less.png"></td>
-                            <td>Hide/show all buttons</td>
-                        </tr>
-                        <tr>
-                            <td><img src="/assets/menu.png"></td>
-                            <td>Open the mask menu, where segmentation masks can be added and managed.</td>
+                            <td>Hide/show all buttons.</td>
                         </tr>
                         <tr>
                             <td><img src="/assets/swap_horiz.png"></td>
                             <td>Show the image in a split viewer, for easier viewing when annotating.</td>
                         </tr>
-                    </tbody>
-                </table>
-
-                <h6>The mask menu</h6>
-                <p>
-                    Clicking the <em>Set mask</em> button opens the mask menu. From there,
-                    a segmentation mask can be uploaded. This should not take long.
-                </p>
-                <p>
-                    Once a mask has been uploaded, it can be applied by clicking its thumbnail.
-                    This shows the mask in an overlay on the image.
-                </p>
-                <p>It also enables several editing tools in the top-left corner:</p>
-                <table class="table table-borderless table-striped mb-3">
-                    <tbody>
                         <tr>
                             <td><img src="/assets/polygon.png"></td>
                             <td>
@@ -88,6 +82,18 @@
                         <tr>
                             <td><img src="/assets/grade.png"></td>
                             <td>Rate the overall accuracy of the segmentation.</td>
+                        </tr>
+                        <tr>
+                            <td><img src="/assets/save.png"></td>
+                            <td>Save all changes.</td>
+                        </tr>
+                        <tr>
+                            <td><img src="/assets/restore.png"></td>
+                            <td>
+                                Restore the segmentation mask to its original state, undoing all
+                                manual changes and removing grading information.
+                                <strong>This cannot be reversed!</strong>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
