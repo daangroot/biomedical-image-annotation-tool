@@ -169,13 +169,6 @@ export class LeafletService {
     return this.createButtonControl(button, 'topleft');
   }
 
-  createMaskMenuControl(): L.Control {
-    const button = this.createButtonElement('Open mask menu', 'menu');
-    button.setAttribute('data-bs-toggle', 'offcanvas');
-    button.setAttribute('href', '#mask-manager-offcanvas');
-    return this.createButtonControl(button, 'topleft');
-  }
-
   createSplitScreenControl(onClick: Function): L.Control {
     const button = this.createButtonElement('Split screen', 'swap_horiz', onClick);
     return this.createButtonControl(button, 'topleft');
@@ -223,6 +216,13 @@ export class LeafletService {
 
   createSaveFeaturesControl(onClick: Function): L.Control {
     const button = this.createButtonElement('Save segments and grades', 'save', onClick);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createExportControl(): L.Control {
+    const button = this.createButtonElement('Export segmentation mask', 'export');
+    button.setAttribute('data-bs-toggle', 'modal');
+    button.setAttribute('href', '#mask-export-modal');
     return this.createButtonControl(button, 'topleft');
   }
 

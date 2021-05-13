@@ -39,6 +39,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private featureEditUndoControl!: L.Control;
   private setOverallScoreControl!: L.Control;
   private saveFeaturesControl!: L.Control;
+  private exportControl!: L.Control;
   private resetFeaturesControl!: L.Control;
 
   private showTopLeftControls: boolean = true;
@@ -164,6 +165,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
     this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
     this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveFeatures());
+    this.exportControl = this.leafletService.createExportControl();
     this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetFeatures());
 
     this.updateTopLeftControls();
@@ -181,6 +183,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeAllInnerRingsControl.remove();
     this.setOverallScoreControl.remove();
     this.saveFeaturesControl.remove();
+    this.exportControl.remove();
     this.resetFeaturesControl.remove();
 
     if (!this.showTopLeftControls) {
@@ -205,6 +208,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeAllInnerRingsControl.addTo(this.maskMap);
     this.setOverallScoreControl.addTo(this.maskMap);
     this.saveFeaturesControl.addTo(this.maskMap);
+    this.exportControl.addTo(this.maskMap);
     this.resetFeaturesControl.addTo(this.maskMap);
   }
 
