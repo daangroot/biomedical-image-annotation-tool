@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Geometry, Feature } from 'geojson';
+import { Feature, Polygon } from 'geojson';
 import { ImageInfo } from '../types/image-info.type';
 
 
@@ -21,14 +21,14 @@ export class ApiService {
     return this.http.get<ImageInfo[]>(this.imagesDataUrl + '/info');
   }
 
-  postBioImage(file: File): Observable<any> {
+  postBioImage(file: File): Observable<{}> {
     const formData = new FormData();
     formData.append('file', file);
 
     return this.http.post(this.imagesDataUrl, formData);
   }
 
-  deleteBioImage(id: string): Observable<any> {
+  deleteBioImage(id: string): Observable<{}> {
     return this.http.delete(`${this.imagesDataUrl}/${id}`);
   }
 
@@ -40,18 +40,26 @@ export class ApiService {
     return this.http.get<ImageInfo[]>(`${this.imagesDataUrl}/${bioImageId}/masks/info`);
   }
 
-  fetchGeoJson(bioImageId: string, maskId: string): Observable<Feature<Geometry, any>[]> {
-    return this.http.get<Feature<Geometry, any>[]>(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/geojson`);
+  fetchFeatures(bioImageId: string, maskId: string): Observable<Feature<Polygon, any>[]> {
+    return this.http.get<Feature<Polygon, any>[]>(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/geojson`);
   }
 
-  postMask(bioImageId: string, file: File): Observable<any> {
+  putFeatures(bioImageId: string, maskId: string, features: Feature<Polygon, any>[]): Observable<{}> {
+    return this.http.put(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/geojson`, features);
+  }
+
+  deleteFeatures(bioImageId: string, maskId: string): Observable<{}> {
+    return this.http.delete(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/geojson`);
+  }
+
+  postMask(bioImageId: string, file: File): Observable<{}> {
     const formData = new FormData();
     formData.append('file', file);
 
     return this.http.post(`${this.imagesDataUrl}/${bioImageId}/masks`, formData);
   }
 
-  deleteMask(bioImageId: string, maskId: string): Observable<any> {
+  deleteMask(bioImageId: string, maskId: string): Observable<{}> {
     return this.http.delete(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}`);
   }
 }

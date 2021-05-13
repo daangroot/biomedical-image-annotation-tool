@@ -220,4 +220,14 @@ export class LeafletService {
     const button = this.createButtonElement('Rate overall accuracy', 'grade', onClick);
     return this.createButtonControl(button, 'topleft');
   }
+
+  createSaveFeaturesControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Save segments and grades', 'save', onClick);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createResetFeaturesControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Reset segments and grades', 'restore', onClick);
+    return this.createButtonControl(button, 'topleft');
+  }
 }

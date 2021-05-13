@@ -38,6 +38,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private removeAllInnerRingsControl!: L.Control;
   private featureEditUndoControl!: L.Control;
   private setOverallScoreControl!: L.Control;
+  private saveFeaturesControl!: L.Control;
+  private resetFeaturesControl!: L.Control;
 
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
@@ -160,6 +162,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeAllInnerRingsControl = this.leafletService.createRemoveAllInnerRingsControl(() => this.removeAllInnerRings());
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
     this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
+    this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveFeatures());
+    this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetFeatures());
 
     this.updateTopLeftControls();
   }
@@ -175,6 +179,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.simplifyAllPolygonsControl.remove();
     this.removeAllInnerRingsControl.remove();
     this.setOverallScoreControl.remove();
+    this.saveFeaturesControl.remove();
+    this.resetFeaturesControl.remove();
 
     if (!this.showTopLeftControls) {
       this.showTopLeftControlsControl.addTo(this.maskMap);
@@ -197,6 +203,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.simplifyAllPolygonsControl.addTo(this.maskMap);
     this.removeAllInnerRingsControl.addTo(this.maskMap);
     this.setOverallScoreControl.addTo(this.maskMap);
+    this.saveFeaturesControl.addTo(this.maskMap);
+    this.resetFeaturesControl.addTo(this.maskMap);
   }
 
   private toggleTopLeftControls() {
@@ -395,7 +403,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureLayers = new Map();
     this.geoJsonLayer.clearLayers();
 
-    this.apiService.fetchGeoJson(this.bioImageInfo.id, this.maskId).subscribe(
+    this.apiService.fetchFeatures(this.bioImageInfo.id, this.maskId).subscribe(
       features => this.geoJsonLayer.addData(features as any),
       error => window.alert('Failed to retrieve GeoJSON from server!')
     )
@@ -577,6 +585,26 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureLayers.get(fid)?.remove();
     this.features.delete(fid);
     this.featureLayers.delete(fid);
+  }
+
+  private saveFeatures(): void {
+    this.apiService.putFeatures(this.bioImageInfo.id, this.maskId, Array.from(this.features.values()))
+      .subscribe(
+        next => window.alert('Segments and numbers have been saved successfully.'),
+        error => window.alert('Failed to save segments and grades!')
+      )
+  }
+
+  private resetFeatures(): void {
+    if (!window.confirm("Are you sure you want to reset all segments and grades? This will undo all saved changes and reset the mask to the original state.")) {
+      return;
+    }
+
+    this.apiService.deleteFeatures(this.bioImageInfo.id, this.maskId)
+      .subscribe(
+        next => this.updateGeoJson(),
+        error => window.alert('Failed to reset segments and grades!')
+      )
   }
 
   private addToFeatureEditUndoStack(features: Feature<Polygon, any>[]): void {
