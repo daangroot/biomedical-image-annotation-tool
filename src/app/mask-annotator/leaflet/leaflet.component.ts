@@ -7,6 +7,7 @@ import { ApiService } from '../../services/api.service';
 import { ImageInfo } from '../../types/image-info.type';
 import { FeatureGrade } from '../../types/feature-grade.type';
 import { LeafletService } from './leaflet.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-leaflet',
@@ -67,6 +68,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     this.initMaskMap();
     this.updateGeoJson();
+    this.updateMetadata();
   }
 
   private initBaseMap(): void {
@@ -164,7 +166,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeAllInnerRingsControl = this.leafletService.createRemoveAllInnerRingsControl(() => this.removeAllInnerRings());
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
     this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
-    this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveFeatures());
+    this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveChanges());
     this.exportControl = this.leafletService.createExportControl();
     this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetFeatures());
 
@@ -414,6 +416,15 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     )
   }
 
+  private updateMetadata(): void {
+    this.overallScore = null;
+
+    this.apiService.fetchMetadata(this.bioImageInfo.id, this.maskId).subscribe(
+      metadata => this.overallScore = metadata.overallScore,
+      error => window.alert('Failed to retrieve mask metadata from server!')
+    )
+  }
+
   private determineFeatureStyle(feature: Feature<Polygon, any>): L.PathOptions {
     if (!feature.properties) {
       return {};
@@ -592,10 +603,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureLayers.delete(fid);
   }
 
-  private saveFeatures(): void {
-    this.apiService.putFeatures(this.bioImageInfo.id, this.maskId, Array.from(this.features.values()))
-      .subscribe(
-        next => window.alert('Segments and numbers have been saved successfully.'),
+  private saveChanges(): void {
+    const putFeatures = this.apiService.putFeatures(this.bioImageInfo.id, this.maskId, Array.from(this.features.values()));
+    const putMetadata = this.apiService.putMetadata(this.bioImageInfo.id, this.maskId, { overallScore: this.overallScore });
+
+    forkJoin([putFeatures, putMetadata]).subscribe(
+        next => window.alert('Segments and grades have been saved successfully.'),
         error => window.alert('Failed to save segments and grades!')
       )
   }
@@ -609,7 +622,13 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       .subscribe(
         next => this.updateGeoJson(),
         error => window.alert('Failed to reset segments and grades!')
-      )
+      );
+
+    this.apiService.putMetadata(this.bioImageInfo.id, this.maskId, { overallScore: null })
+      .subscribe(
+        next => this.updateMetadata(),
+        error => window.alert('Failed to reset mask metadata!')
+      );
   }
 
   private addToFeatureEditUndoStack(features: Feature<Polygon, any>[]): void {
@@ -672,7 +691,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       if (!isNaN(score) && score >= 0 && score <= 100) {
         this.overallScore = score;
       }
-    }
-    catch { }
+    } catch { }
   }
 }

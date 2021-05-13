@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Feature, Polygon } from 'geojson';
 import { ImageInfo } from '../types/image-info.type';
+import { MaskMetadata } from '../types/mask-metadata.type';
 
 
 @Injectable({
@@ -50,6 +51,14 @@ export class ApiService {
 
   deleteFeatures(bioImageId: string, maskId: string): Observable<{}> {
     return this.http.delete(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/geojson`);
+  }
+
+  fetchMetadata(bioImageId: string, maskId: string): Observable<MaskMetadata> {
+    return this.http.get<MaskMetadata>(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/metadata`);
+  }
+
+  putMetadata(bioImageId: string, maskId: string, metadata: MaskMetadata): Observable<{}> {
+    return this.http.put(`${this.imagesDataUrl}/${bioImageId}/masks/${maskId}/metadata`, metadata);
   }
 
   postMask(bioImageId: string, file: File): Observable<{}> {
