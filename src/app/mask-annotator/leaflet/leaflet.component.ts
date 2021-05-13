@@ -96,8 +96,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.sw = [0, this.bioImageInfo.height];
     this.ne = [this.bioImageInfo.width, 0];
     const offset: number = this.tileSize * 5;
+    const offsetTop = this.tileSize * 15;
     this.swMax = [this.sw[0] - offset, this.sw[1] + offset];
-    this.neMax = [this.ne[0] + offset, this.ne[1] - offset];
+    this.neMax = [this.ne[0] + offset, this.ne[1] - offsetTop];
 
     this.maxNativeZoom = this.leafletService.calcMaxNativeZoomLevel(this.bioImageInfo.width, this.bioImageInfo.height, this.tileSize);
     this.leafletService.setMaxNativeZoom(this.maxNativeZoom);
