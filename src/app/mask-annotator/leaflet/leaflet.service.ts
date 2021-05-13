@@ -219,10 +219,8 @@ export class LeafletService {
     return this.createButtonControl(button, 'topleft');
   }
 
-  createExportControl(): L.Control {
-    const button = this.createButtonElement('Export segmentation mask', 'export');
-    button.setAttribute('data-bs-toggle', 'modal');
-    button.setAttribute('href', '#mask-export-modal');
+  createExportControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Export segmentation mask', 'export', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 

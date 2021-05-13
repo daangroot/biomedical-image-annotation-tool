@@ -1,4 +1,4 @@
-import { Input, Component, OnInit, AfterViewInit } from '@angular/core';
+import { Input, Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import { Feature, Polygon, MultiPolygon } from 'geojson';
@@ -8,6 +8,7 @@ import { ImageInfo } from '../../types/image-info.type';
 import { FeatureGrade } from '../../types/feature-grade.type';
 import { LeafletService } from './leaflet.service';
 import { forkJoin } from 'rxjs';
+import { MaskExportComponent } from '../mask-export/mask-export.component';
 
 @Component({
   selector: 'app-leaflet',
@@ -55,6 +56,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private readonly tileSize: number = 128;
   private readonly maxSimplifyTolerance: number = 10000;
+
+  @ViewChild(MaskExportComponent)
+  private maskExportComponent!: MaskExportComponent;
 
   constructor(
     private apiService: ApiService,
@@ -167,7 +171,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
     this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
     this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveChanges());
-    this.exportControl = this.leafletService.createExportControl();
+    this.exportControl = this.leafletService.createExportControl(() => this.exportMask());
     this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetFeatures());
 
     this.updateTopLeftControls();
@@ -611,6 +615,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
         next => window.alert('Segments and grades have been saved successfully.'),
         error => window.alert('Failed to save segments and grades!')
       )
+  }
+
+  private exportMask(): void {
+    const features = Array.from(this.features.values());
+    const metadata = { overallScore: this.overallScore };
+    this.maskExportComponent.show(features, metadata);
   }
 
   private resetFeatures(): void {
