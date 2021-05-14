@@ -43,6 +43,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private saveFeaturesControl!: L.Control;
   private exportControl!: L.Control;
   private resetFeaturesControl!: L.Control;
+  private unsavedChangesControl!: L.Control;
 
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
@@ -51,6 +52,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private features: Map<number, Feature<Polygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
   private featureEditUndoStack: Feature<Polygon, any>[][] = [];
+  private unsavedChanges: boolean = false;
 
   private overallScore: number | null = null;
 
@@ -173,6 +175,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveChanges());
     this.exportControl = this.leafletService.createExportControl(() => this.exportMask());
     this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetFeatures());
+    this.unsavedChangesControl = this.leafletService.createUnsavedChangesControl();
+
+    this.unsavedChangesControl.addTo(this.maskMap);
 
     this.updateTopLeftControls();
   }
@@ -486,6 +491,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       const score = parseInt(scoreString);
       const feature = this.features.get(fid)!;
       feature.properties.score = score;
+      this.setUnsavedChanges(true);
     }
     catch { }
   }
@@ -494,6 +500,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const feature = this.features.get(fid)!;
     feature.properties.grade = grade;
     this.updateFeatureLayer(fid, true);
+    this.setUnsavedChanges(true);
   }
 
   private createFeature(layer: L.Layer): void {
@@ -612,7 +619,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const putMetadata = this.apiService.putMetadata(this.bioImageInfo.id, this.maskId, { overallScore: this.overallScore });
 
     forkJoin([putFeatures, putMetadata]).subscribe(
-        next => window.alert('Segments and grades have been saved successfully.'),
+        next => {
+          this.setUnsavedChanges(false);
+          window.alert('Segments and grades have been saved successfully.');
+        },
         error => window.alert('Failed to save segments and grades!')
       )
   }
@@ -639,6 +649,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
         next => this.updateMetadata(),
         error => window.alert('Failed to reset mask metadata!')
       );
+  }
+
+  private setUnsavedChanges(unsavedChanges: boolean) {
+    this.unsavedChanges = unsavedChanges;
+    // @ts-ignore
+    this.unsavedChangesControl.setVisible(this.unsavedChanges);
   }
 
   private addToFeatureEditUndoStack(features: Feature<Polygon, any>[]): void {
@@ -700,6 +716,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
       if (!isNaN(score) && score >= 0 && score <= 100) {
         this.overallScore = score;
+        this.setUnsavedChanges(true);
       }
     } catch { }
   }

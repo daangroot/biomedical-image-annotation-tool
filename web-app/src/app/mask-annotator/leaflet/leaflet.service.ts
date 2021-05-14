@@ -133,7 +133,7 @@ export class LeafletService {
     return [polygon[0]];
   }
 
-  createButtonControl(button: HTMLElement, position: L.ControlPosition): L.Control {
+  private createButtonControl(button: HTMLElement, position: L.ControlPosition): L.Control {
     const Control = L.Control.extend({
       onAdd(map: L.Map) {
         const container: HTMLElement = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
@@ -146,7 +146,7 @@ export class LeafletService {
     })
   }
 
-  createButtonElement(title: string, image: string, onClick?: Function): HTMLElement {
+  private createButtonElement(title: string, image: string, onClick?: Function): HTMLElement {
     const button = L.DomUtil.create('a');
     button.setAttribute('role', 'button');
     button.title = title;
@@ -227,5 +227,23 @@ export class LeafletService {
   createResetFeaturesControl(onClick: Function): L.Control {
     const button = this.createButtonElement('Reset segments and grades', 'restore', onClick);
     return this.createButtonControl(button, 'topleft');
+  }
+
+  createUnsavedChangesControl(): L.Control {
+    const Control = L.Control.extend({
+      badge: L.DomUtil.create('span', 'badge bg-primary'),
+      onAdd(map: L.Map) {
+        this.badge.innerHTML = 'Unsaved changes';
+        this.badge.style.fontSize = '1em';
+        this.setVisible(false);
+        return this.badge;
+      },
+      setVisible(visible: boolean) {
+        this.badge.classList.toggle('d-none', !visible);
+      }
+    });
+    return new Control({
+      position: 'bottomleft'
+    });
   }
 }
