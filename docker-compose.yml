@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  web-app:
+    build: ./biomedical-image-annotation-web-app
+    ports:
+      - "80:80"
+  image-server:
+    build: ./biomedical-image-server
+    ports:
+      - "8080:8080"
