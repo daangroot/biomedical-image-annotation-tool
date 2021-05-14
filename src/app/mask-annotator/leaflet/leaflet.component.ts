@@ -8,7 +8,7 @@ import { ImageInfo } from '../../types/image-info.type';
 import { FeatureGrade } from '../../types/feature-grade.type';
 import { LeafletService } from './leaflet.service';
 import { forkJoin } from 'rxjs';
-import { MaskExportComponent } from '../mask-export/mask-export.component';
+import { MaskExportComponent } from '../../mask-export/mask-export.component';
 
 @Component({
   selector: 'app-leaflet',

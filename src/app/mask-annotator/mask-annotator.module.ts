@@ -3,19 +3,19 @@ import { CommonModule } from '@angular/common';
 import { MaskAnnotatorComponent } from './mask-annotator/mask-annotator.component';
 import { MaskAnnotatorRoutingModule } from './mask-annotator-routing.module';
 import { LeafletComponent } from './leaflet/leaflet.component';
-import { MaskExportComponent } from './mask-export/mask-export.component';
+import { MaskExportModule } from '../mask-export/mask-export.module';
 
 
 
 @NgModule({
   declarations: [
     MaskAnnotatorComponent,
-    LeafletComponent,
-    MaskExportComponent
+    LeafletComponent
   ],
   imports: [
     CommonModule,
-    MaskAnnotatorRoutingModule
+    MaskAnnotatorRoutingModule,
+    MaskExportModule
   ]
 })
 export class MaskAnnotatorModule { }
