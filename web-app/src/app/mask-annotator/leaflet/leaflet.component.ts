@@ -241,7 +241,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private disableDrawMode(): void {
-    if (!this.disableDrawMode) {
+    if (!this.drawModeEnabled) {
       return;
     }
     this.drawModeEnabled = false;
