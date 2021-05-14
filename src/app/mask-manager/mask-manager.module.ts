@@ -5,6 +5,7 @@ import { MaskManagerRoutingModule } from './mask-manager-routing.module';
 import { MaskListComponent } from './mask-list/mask-list.component';
 import { MaskUploadComponent } from './mask-upload/mask-upload.component';
 import { BioImageInfoComponent } from './bio-image-info/bio-image-info.component';
+import { MaskExportModule } from '../mask-export/mask-export.module';
 
 
 
@@ -17,7 +18,8 @@ import { BioImageInfoComponent } from './bio-image-info/bio-image-info.component
   ],
   imports: [
     CommonModule,
-    MaskManagerRoutingModule
+    MaskManagerRoutingModule,
+    MaskExportModule
   ]
 })
 export class MaskManagerModule { }

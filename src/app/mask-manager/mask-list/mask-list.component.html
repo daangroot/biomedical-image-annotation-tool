@@ -21,6 +21,10 @@
           <div><strong>Resolution:</strong> {{ maskInfo.width }} x {{ maskInfo.height }}</div>
           <div><strong>Size:</strong> {{ (maskInfo.size / 1048576) | number:'1.0-2' }} MB</div>
         </div>
+        <div class="me-3">
+          <button type="button" class="btn btn-secondary" (click)="exportMask(maskInfo.id)" *ngIf="exportedMaskId !== maskInfo.id">Export</button>
+          <div class="spinner-border text-primary" role="status" *ngIf="exportedMaskId === maskInfo.id"></div>
+        </div>
         <div>
           <button type="button" class="btn btn-danger" (click)="deleteMask(maskInfo.id)" *ngIf="deletedMaskId !== maskInfo.id">Delete</button>
           <div class="spinner-border text-primary" role="status" *ngIf="deletedMaskId === maskInfo.id"></div>
@@ -29,4 +33,4 @@
     </li>
   </ul>
 </div>
-
+<app-mask-export></app-mask-export>
