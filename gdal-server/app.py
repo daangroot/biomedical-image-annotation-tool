@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from flask import Flask, jsonify, request, send_from_directory, after_this_request
+from flask import Flask, jsonify, request, send_file, after_this_request
 from pathlib import Path
 from osgeo import gdal, ogr
 
@@ -29,6 +29,7 @@ def polygonize():
     
     shp_name = path.name
     out_path = Path(OUTPUT_FOLDER) / (shp_name + '.json')
+
     src_ds = gdal.Open(str(path))
     driver = gdal.GetDriverByName('GeoJSON')
     target_ds = driver.Create(str(out_path), src_ds.RasterXSize, src_ds.RasterYSize)
@@ -43,18 +44,35 @@ def polygonize():
     def remove_files(response): 
         path.unlink()
         out_path.unlink()
-        return response 
+        return response
 
     with open(out_path) as file:
         return jsonify(json.load(file)['features'])
 
 @app.route('/rasterize', methods=['POST'])
 def rasterize():
-    file = request.files['file']
-    path = save_file(file, 'shp')
+    geojson = {
+        'type': 'FeatureCollection',
+        'features': request.get_json()
+    }
+
+    path = Path(UPLOAD_FOLDER) / (str(uuid.uuid1()) + '.json')
+    with open(path, 'w') as file:
+        json.dump(geojson, file)
+
+    out_path = Path(OUTPUT_FOLDER) / (str(uuid.uuid1()) + '.tif')
 
     src_ds = ogr.Open(str(path))
+    src_layer = src_ds.GetLayer(0)
+    driver = gdal.GetDriverByName('GTiff')
+    target_ds = driver.Create(str(out_path), 16384, 16384)
 
-    gdal.Rasterize(OUTPUT_FOLDER + '/image.tiff', src_ds)
+    gdal.RasterizeLayer(target_ds, [1], src_layer)
 
-    return send_from_directory(OUTPUT_FOLDER, 'image.tiff')
+    @after_this_request 
+    def remove_files(response): 
+        path.unlink()
+        out_path.unlink()
+        return response
+
+    return send_file(out_path)
