@@ -1,9 +1,8 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { ApiService } from '../../services/api.service';
-import { ImageInfo } from '../../types/image-info.type';
 import { environment } from '../../../environments/environment';
-import { MaskExportComponent } from 'src/app/mask-export/mask-export.component';
-import { forkJoin } from 'rxjs';
+import { MaskExportComponent } from '../../mask-export/mask-export.component';
+import { MaskApiService } from '../../services/mask-api.service';
+import { ImageMetadata } from '../../types/image-metadata.type';
 
 @Component({
   selector: 'app-mask-list',
@@ -11,18 +10,15 @@ import { forkJoin } from 'rxjs';
   styleUrls: ['./mask-list.component.css']
 })
 export class MaskListComponent implements OnInit {
-  @Input() bioImageId!: string;
+  @Input() imageId!: string;
+  @ViewChild(MaskExportComponent) maskExportComponent!: MaskExportComponent;
   environment = environment;
-  maskInfos: ImageInfo[] = [];
+  maskMetadataList: ImageMetadata[] = [];
   isLoading: boolean = false;
   isDataLoaded: boolean = false;
   deletedMaskId: string | null = null;
 
-  @ViewChild(MaskExportComponent)
-  private maskExportComponent!: MaskExportComponent;
-  exportedMaskId: string | null = null;
-
-  constructor(private apiService: ApiService) { }
+  constructor(private maskApiService: MaskApiService) { }
 
   ngOnInit(): void {
     this.getAllMaskInfos();
@@ -32,33 +28,15 @@ export class MaskListComponent implements OnInit {
     this.isLoading = true;
     this.isDataLoaded = false;
 
-    this.apiService.fetchMaskInfos(this.bioImageId)
+    this.maskApiService.fetchAllMaskMetadata(this.imageId)
       .subscribe(
-        maskInfos => {
-          this.maskInfos = maskInfos;
+        metadata => {
+          this.maskMetadataList = metadata;
           this.isLoading = false;
           this.isDataLoaded = true;
         },
         error => this.isLoading = false
       )
-  }
-
-  exportMask(id: string): void {
-    this.exportedMaskId = id;
-
-    const fetchFeatures = this.apiService.fetchFeatures(this.bioImageId, id);
-    const fetchMetadata = this.apiService.fetchMetadata(this.bioImageId, id);
-
-    forkJoin([fetchFeatures, fetchMetadata]).subscribe(
-      result => {
-        this.exportedMaskId = null;
-        this.maskExportComponent.show(...result);
-      },
-      error => {
-        this.exportedMaskId = null;
-        window.alert('Failed to retrieve features or metadata from server!');
-      }
-    )
   }
 
   deleteMask(id: string): void {
@@ -67,7 +45,7 @@ export class MaskListComponent implements OnInit {
 
     this.deletedMaskId = id;
 
-    this.apiService.deleteMask(this.bioImageId, id)
+    this.maskApiService.deleteMask(this.imageId, id)
       .subscribe(
         next => this.getAllMaskInfos(),
         error => {

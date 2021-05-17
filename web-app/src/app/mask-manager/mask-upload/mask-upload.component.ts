@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ApiService } from '../../services/api.service';
+import { MaskApiService } from '../../services/mask-api.service';
 
 @Component({
   selector: 'app-mask-upload',
@@ -7,11 +7,11 @@ import { ApiService } from '../../services/api.service';
   styleUrls: ['./mask-upload.component.css']
 })
 export class MaskUploadComponent implements OnInit {
-  @Input() bioImageId!: string;
+  @Input() imageId!: string;
   file: File | null = null;
   isUploading: boolean = false;
 
-  constructor(private apiService: ApiService) {
+  constructor(private maskApiService: MaskApiService) {
   }
 
   ngOnInit(): void {
@@ -29,7 +29,7 @@ export class MaskUploadComponent implements OnInit {
 
     this.isUploading = true;
 
-    this.apiService.postMask(this.bioImageId, this.file)
+    this.maskApiService.postMask(this.imageId, this.file)
       .subscribe(
         next => window.location.reload(),
         error => {

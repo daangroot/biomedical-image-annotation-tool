@@ -1,33 +1,32 @@
 <div id="mask-info-list">
   <h4>Uploaded masks</h4>
   <div class="spinner-border text-primary" role="status" *ngIf="isLoading"></div>
-  <div class="alert alert-primary" role="alert" *ngIf="maskInfos.length === 0 && !isLoading && isDataLoaded">
+  <div class="alert alert-primary" role="alert" *ngIf="maskMetadataList.length === 0 && !isLoading && isDataLoaded">
     No masks found.
   </div>
   <div class="alert alert-danger" role="alert" *ngIf="!isLoading && !isDataLoaded">
     Failed to retrieve masks from server!
   </div>
   <ul class="list-group" *ngIf="isDataLoaded">
-    <li class="list-group-item" *ngFor="let maskInfo of maskInfos">
+    <li class="list-group-item" *ngFor="let metadata of maskMetadataList">
       <div class="mask-info d-flex">
         <div class="me-3">
-          <a href="/images/{{ bioImageId }}/masks/{{ maskInfo.id }}">
-            <img src="{{ environment.apiUrl }}/api/images/{{ bioImageId }}/masks/{{ maskInfo.id }}/thumbnail" width="128" height="128">
+          <a href="/images/{{ imageId }}/masks/{{ metadata.id }}">
+            <img src="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ metadata.id }}/thumbnail" width="128" height="128">
           </a>
         </div>
         <div class="me-3">
-          <div><strong>File:</strong> {{ maskInfo.originalName }}</div>
-          <div><strong>MIME type:</strong> {{ maskInfo.mimeType }}</div>
-          <div><strong>Resolution:</strong> {{ maskInfo.width }} x {{ maskInfo.height }}</div>
-          <div><strong>Size:</strong> {{ (maskInfo.size / 1048576) | number:'1.0-2' }} MB</div>
+          <div><strong>File:</strong> {{ metadata.originalName }}</div>
+          <div><strong>MIME type:</strong> {{ metadata.mimeType }}</div>
+          <div><strong>Resolution:</strong> {{ metadata.width }} x {{ metadata.height }}</div>
+          <div><strong>Size:</strong> {{ (metadata.size / 1048576) | number:'1.0-2' }} MB</div>
         </div>
         <div class="me-3">
-          <button type="button" class="btn btn-secondary" (click)="exportMask(maskInfo.id)" *ngIf="exportedMaskId !== maskInfo.id">Export</button>
-          <div class="spinner-border text-primary" role="status" *ngIf="exportedMaskId === maskInfo.id"></div>
+          <button type="button" class="btn btn-primary" (click)="maskExportComponent.show(imageId, metadata.id)">Export</button>
         </div>
         <div>
-          <button type="button" class="btn btn-danger" (click)="deleteMask(maskInfo.id)" *ngIf="deletedMaskId !== maskInfo.id">Delete</button>
-          <div class="spinner-border text-primary" role="status" *ngIf="deletedMaskId === maskInfo.id"></div>
+          <button type="button" class="btn btn-danger" (click)="deleteMask(metadata.id)" *ngIf="deletedMaskId !== metadata.id">Delete</button>
+          <div class="spinner-border text-primary" role="status" *ngIf="deletedMaskId === metadata.id"></div>
         </div>
       </div>
     </li>

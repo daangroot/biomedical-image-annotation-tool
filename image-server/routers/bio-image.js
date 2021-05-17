@@ -7,7 +7,7 @@ const upload = multer({ dest: 'uploads/' })
 
 router.post('/images', upload.single('file'), async (req, res) => {
 	try {
-		await service.processBioImage(req.file)
+		await service.processImage(req.file)
 		res.end()
 	} catch (error) {
 		console.error(error)
@@ -15,10 +15,10 @@ router.post('/images', upload.single('file'), async (req, res) => {
 	}
 })
 
-router.get('/images/info', async (req, res) => {
+router.get('/images/metadata', async (req, res) => {
 	try {
-		const allBioImageInfo = await service.getAllBioImageInfo()
-		res.json(allBioImageInfo)
+		const metadata = await service.getAllImageMetadata()
+		res.json(metadata)
 	} catch (error) {
 		console.error(error)
 		res.sendStatus(500)
@@ -28,7 +28,7 @@ router.get('/images/info', async (req, res) => {
 router.delete('/images/:id', async (req, res) => {
 	const id = req.params.id
 	try {
-		await service.deleteBioImage(id)
+		await service.deleteImage(id)
 		res.end()
 	} catch (error) {
 		console.error(error)
@@ -36,10 +36,10 @@ router.delete('/images/:id', async (req, res) => {
 	}
 })
 
-router.get('/images/:id/info', async (req, res) => {
+router.get('/images/:id/metadata', async (req, res) => {
 	const id = req.params.id
 	try {
-		const data = await service.getBioImageInfo(id)
+		const data = await service.getImageMetadata(id)
 		data ? res.json(data) : res.sendStatus(404)
 	} catch (error) {
 		console.error(error)

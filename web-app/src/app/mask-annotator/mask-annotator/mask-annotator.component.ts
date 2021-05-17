@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { HeaderService } from '../../header/header.service';
-import { ApiService } from '../../services/api.service';
-import { ImageInfo } from '../../types/image-info.type';
+import { ImageApiService } from '../../services/image-api.service';
+import { MaskApiService } from '../../services/mask-api.service';
+import { ImageMetadata } from '../../types/image-metadata.type';
 
 @Component({
   selector: 'app-mask-annotator',
@@ -10,44 +11,39 @@ import { ImageInfo } from '../../types/image-info.type';
   styleUrls: ['./mask-annotator.component.css']
 })
 export class MaskAnnotatorComponent implements OnInit {
-  bioImageInfo!: ImageInfo;
+  imageId!: string;
   maskId!: string;
-  maskInfo!: ImageInfo;
+  imageMetadata!: ImageMetadata;
   
   constructor(
     private route: ActivatedRoute,
-    private apiService: ApiService,
+    private imageApiService: ImageApiService,
+    private maskApiService: MaskApiService,
     private headerService: HeaderService
   ) { }
 
   ngOnInit(): void {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
-    const bioImageId: string = routeParams.get('imageId')!;
+    this.imageId = routeParams.get('imageId')!;
     this.maskId = routeParams.get('maskId')!;
-
-    this.getBioImageInfo(bioImageId);
-    this.getMaskInfo(bioImageId, this.maskId);
+    this.getImageMetadata();
+    this.getMaskMetadata();
   }
 
-  private getBioImageInfo(id: string): void {
-    this.apiService.fetchBioImageInfo(id)
-      .subscribe(
-        info => {
-          this.bioImageInfo = info;
-          this.headerService.setBioImageData(info.id, info.originalName);
-        },
-        error => window.alert('Failed to get data from server!')
-      )
+  getImageMetadata(): void {
+    this.imageApiService.fetchImageMetadata(this.imageId).subscribe(
+      metadata => {
+        this.imageMetadata = metadata;
+        this.headerService.setImageMetadata(metadata);
+      },
+      error => window.alert('Failed to retrieve image metadata from server!')
+    )
   }
 
-  private getMaskInfo(bioImageid: string, maskId: string): void {
-    this.apiService.fetchMaskInfo(bioImageid, maskId)
-      .subscribe(
-        info => {
-          this.maskInfo = info;
-          this.headerService.setMaskImageData(info.id, info.originalName);
-        },
-        error => window.alert('Failed to get data from server!')
-      )
+  getMaskMetadata(): void {
+    this.maskApiService.fetchMaskMetadata(this.imageId, this.maskId).subscribe(
+      metadata => this.headerService.setMaskMetadata(metadata),
+      error => window.alert('Failed to retrieve mask metadata from server!')
+    )
   }
 }

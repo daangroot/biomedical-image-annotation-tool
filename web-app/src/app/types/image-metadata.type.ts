@@ -1,4 +1,4 @@
-export interface ImageInfo {
+export interface ImageMetadata {
   id: string,
   originalName: string,
   encoding: string,

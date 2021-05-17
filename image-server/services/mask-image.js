@@ -8,8 +8,8 @@ const fsAsync = fs.promises
 
 const GDAL_SERVER_URL = 'http://localhost:5000'
 
-async function getMaskImageInfo(bioImageId, maskId) {
-	const filePath = `images/${bioImageId}/masks/${maskId}/info.json`
+async function getMaskMetadata(imageId, maskId) {
+	const filePath = `images/${imageId}/masks/${maskId}/metadata.json`
 	if (await utils.pathExists(filePath)) {
 		const data = await fsAsync.readFile(filePath)
 		return JSON.parse(data)
@@ -18,32 +18,32 @@ async function getMaskImageInfo(bioImageId, maskId) {
 	}
 }
 
-async function getAllMaskImageInfo(bioImageId) {
-	const maskInfos = []
-	const masksPath = `images/${bioImageId}/masks`
+async function getAllMaskMetadata(imageId) {
+	const metadataList = []
+	const masksPath = `images/${imageId}/masks`
 	if (await utils.pathExists(masksPath)) {
 		const maskIds = await fsAsync.readdir(masksPath)
 		for (const maskId of maskIds) {
-			const maskInfo = await getMaskImageInfo(bioImageId, maskId)
-			if (maskInfo !== null) {
-				maskInfos.push(maskInfo)
+			const metadata = await getMaskMetadata(imageId, maskId)
+			if (metadata !== null) {
+				metadataList.push(metadata)
 			}
 		}
 	}
 
-	return maskInfos
+	return metadataList
 }
 
-async function generateMaskImage(bioImageId, maskId) {
-	const maskInfo = await getMaskImageInfo(bioImageId, maskId)
+async function generateMask(imageId, maskId) {
+	const metadata = await getMaskMetadata(imageId, maskId)
 
-	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
-	const features = await fsAsync.readFile(filePath)
+	const filePath = `images/${imageId}/masks/${maskId}/annotation_data_saved.json`
+	const annotationData = await fsAsync.readFile(filePath)
 
 	const json = {
-		width: maskInfo.width,
-		height: maskInfo.height,
-		features: JSON.parse(features)
+		width: metadata.width,
+		height: metadata.height,
+		features: JSON.parse(annotationData).features
 	}
 
 	const response = await axios.post(GDAL_SERVER_URL + '/rasterize', json, {
@@ -53,22 +53,28 @@ async function generateMaskImage(bioImageId, maskId) {
 	return response.data
 }
 
-async function processMaskImage(bioImageId, imageData) {
-	const targetPath = `images/${bioImageId}/masks/${imageData.filename}`
+async function processMask(imageId, maskProperties) {
+	const targetPath = `images/${imageId}/masks/${maskProperties.filename}`
 	await fsAsync.mkdir(targetPath, { recursive: true })
 
-	await imageService.saveImageInfo(imageData, targetPath)
-	await imageService.createThumbnail(imageData.path, targetPath)
+	await imageService.saveImageMetadata(maskProperties, targetPath)
+	await imageService.createThumbnail(maskProperties.path, targetPath)
 
-	await maskToGeoJson(imageData.path, targetPath)
+	await createAnnotationData(maskProperties.path, targetPath)
 
-	const metadata = { overallScore: null }
-	await fsAsync.writeFile(targetPath + '/metadata.json', JSON.stringify(metadata))
-
-	await fsAsync.unlink(imageData.path)
+	await fsAsync.unlink(maskProperties.path)
 }
 
-async function maskToGeoJson(sourcePath, targetPath) {
+async function createAnnotationData(sourcePath, targetPath) {
+	annotationData = JSON.stringify({
+		features: await maskToGeoJson(sourcePath),
+		overallScore: null
+	})
+	await fsAsync.writeFile(targetPath + '/annotation_data_original.json', annotationData)
+	await fsAsync.writeFile(targetPath + '/annotation_data_saved.json', annotationData)
+}
+
+async function maskToGeoJson(sourcePath) {
 	const form = new FormData()
 	form.append('file', fs.createReadStream(sourcePath))
 
@@ -76,50 +82,35 @@ async function maskToGeoJson(sourcePath, targetPath) {
 		headers: form.getHeaders()
 	})
 
-	const json = JSON.stringify(response.data)
-	await fsAsync.writeFile(targetPath + '/geojson_original.json', json)
-	await fsAsync.writeFile(targetPath + '/geojson_updated.json', json)
+	return response.data
 }
 
-async function getGeoJson(bioImageId, maskId) {
-	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
+async function getAnnotationData(imageId, maskId) {
+	const filePath = `images/${imageId}/masks/${maskId}/annotation_data_saved.json`
 	const data = await fsAsync.readFile(filePath)
 	return JSON.parse(data)
 }
 
-async function saveGeoJson(bioImageId, maskId, json) {
-	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
-	await fsAsync.writeFile(filePath, json)
+async function saveAnnotationData(imageId, maskId, annotationData) {
+	const filePath = `images/${imageId}/masks/${maskId}/annotation_data_saved.json`
+	await fsAsync.writeFile(filePath, annotationData)
 }
 
-async function resetGeoJson(bioImageId, maskId) {
-	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
-	const filePathOriginal = `images/${bioImageId}/masks/${maskId}/geojson_original.json`
+async function resetAnnotationData(imageId, maskId) {
+	const filePath = `images/${imageId}/masks/${maskId}/annotation_data_saved.json`
+	const filePathOriginal = `images/${imageId}/masks/${maskId}/annotation_data_original.json`
 	await fsAsync.copyFile(filePathOriginal, filePath)
 }
 
-async function getMetadata(bioImageId, maskId) {
-	const filePath = `images/${bioImageId}/masks/${maskId}/metadata.json`
-	const data = await fsAsync.readFile(filePath)
-	return JSON.parse(data)
+async function deleteMask(imageId, maskId) {
+	await fsAsync.rmdir(`images/${imageId}/masks/${maskId}`, { recursive: true })
 }
 
-async function saveMetadata(bioImageId, maskId, json) {
-	const filePath = `images/${bioImageId}/masks/${maskId}/metadata.json`
-	await fsAsync.writeFile(filePath, json)
-}
-
-async function deleteMaskImage(bioImageId, maskId) {
-	await fsAsync.rmdir(`images/${bioImageId}/masks/${maskId}`, { recursive: true })
-}
-
-module.exports.getMaskImageInfo = getMaskImageInfo
-module.exports.getAllMaskImageInfo = getAllMaskImageInfo
-module.exports.generateMaskImage = generateMaskImage
-module.exports.processMaskImage = processMaskImage
-module.exports.getGeoJson = getGeoJson
-module.exports.saveGeoJson = saveGeoJson
-module.exports.resetGeoJson = resetGeoJson
-module.exports.getMetadata = getMetadata
-module.exports.saveMetadata = saveMetadata
-module.exports.deleteMaskImage = deleteMaskImage
+module.exports.getMaskMetadata = getMaskMetadata
+module.exports.getAllMaskMetadata = getAllMaskMetadata
+module.exports.generateMask = generateMask
+module.exports.processMask = processMask
+module.exports.getAnnotationData = getAnnotationData
+module.exports.saveAnnotationData = saveAnnotationData
+module.exports.resetAnnotationData = resetAnnotationData
+module.exports.deleteMask = deleteMask

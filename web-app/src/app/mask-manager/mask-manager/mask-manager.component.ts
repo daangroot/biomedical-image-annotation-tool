@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { HeaderService } from '../../header/header.service';
-import { ApiService } from '../../services/api.service';
-import { ImageInfo } from '../../types/image-info.type';
+import { ImageApiService } from '../../services/image-api.service';
+import { ImageMetadata } from '../../types/image-metadata.type';
 
 @Component({
   selector: 'app-mask-manager',
@@ -10,29 +10,28 @@ import { ImageInfo } from '../../types/image-info.type';
   styleUrls: ['./mask-manager.component.css']
 })
 export class MaskManagerComponent implements OnInit {
-  bioImageId!: string;
-  bioImageInfo!: ImageInfo;
+  imageId!: string;
+  imageMetadata!: ImageMetadata;
 
   constructor(
     private route: ActivatedRoute,
-    private apiService: ApiService,
+    private imageApiService: ImageApiService,
     private headerService: HeaderService
   ) { }
 
   ngOnInit(): void {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
-    this.bioImageId = routeParams.get('imageId')!;
-    this.getBioImageInfo(this.bioImageId);
+    this.imageId = routeParams.get('imageId')!;
+    this.getImageMetadata();
   }
 
-  getBioImageInfo(id: string): void {
-    this.apiService.fetchBioImageInfo(id)
-      .subscribe(
-        imageInfo => {
-          this.bioImageInfo = imageInfo;
-          this.headerService.setBioImageData(imageInfo.id, imageInfo.originalName);
-        },
-        error => window.alert('Failed to retrieve image info from server!')
-      )
+  getImageMetadata(): void {
+    this.imageApiService.fetchImageMetadata(this.imageId).subscribe(
+      metadata => {
+        this.imageMetadata = metadata;
+        this.headerService.setImageMetadata(metadata);
+      },
+      error => window.alert('Failed to retrieve image metadata from server!')
+    )
   }
 }

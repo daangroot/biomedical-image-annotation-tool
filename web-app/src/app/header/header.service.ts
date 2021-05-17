@@ -1,22 +1,23 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
+import { ImageMetadata } from '../types/image-metadata.type';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HeaderService {
-  private bioImageDataSource = new Subject<[string, string]>();
-  bioImageData$ = this.bioImageDataSource.asObservable();
-  private maskImageDataSource = new Subject<[string, string]>();
-  maskImageData$ = this.maskImageDataSource.asObservable();
+  private imageMetadataSource = new Subject<ImageMetadata>();
+  imageMetadata$ = this.imageMetadataSource.asObservable();
+  private maskMetadataSource = new Subject<ImageMetadata>();
+  maskMetadata$ = this.maskMetadataSource.asObservable();
 
   constructor() { }
 
-  setBioImageData(id: string, name: string) {
-    this.bioImageDataSource.next([id, name]);
+  setImageMetadata(metadata: ImageMetadata) {
+    this.imageMetadataSource.next(metadata);
   }
 
-  setMaskImageData(id: string, name: string) {
-    this.maskImageDataSource.next([id, name]);
+  setMaskMetadata(metadata: ImageMetadata) {
+    this.maskMetadataSource.next(metadata);
   }
 }

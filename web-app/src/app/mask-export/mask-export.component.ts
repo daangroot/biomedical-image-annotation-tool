@@ -1,8 +1,9 @@
 import { AfterViewInit, Component } from '@angular/core';
 
-import * as bootstrap from 'bootstrap';
-import { Feature, Polygon } from 'geojson';
-import { MaskMetadata } from 'src/app/types/mask-metadata.type';
+import { Modal } from 'bootstrap';
+import { environment } from '../../environments/environment';
+import { MaskApiService } from '../services/mask-api.service';
+import { AnnotationData } from '../types/annotation-data.type';
 
 @Component({
   selector: 'app-mask-export',
@@ -10,30 +11,32 @@ import { MaskMetadata } from 'src/app/types/mask-metadata.type';
   styleUrls: ['./mask-export.component.css']
 })
 export class MaskExportComponent implements AfterViewInit {
+  imageId!: string;
+  maskId!: string;
+  private modal!: Modal;
+  environment = environment;
 
-  private modal!: bootstrap.Modal;
-  private features: Feature<Polygon, any>[] | null = null;
-  private metadata: MaskMetadata | null = null;
-
-  constructor() { }
+  constructor(private maskApiService: MaskApiService) { }
 
   ngAfterViewInit(): void {
     const element = document.getElementById('mask-export-modal')!;
-    this.modal = new bootstrap.Modal(element);
+    this.modal = new Modal(element);
   }
 
-  show(features: Feature<Polygon, any>[], metadata: MaskMetadata) {
-    this.features = features;
-    this.metadata = metadata;
+  show(imageId: string, maskId: string) {
+    this.imageId = imageId;
+    this.maskId = maskId;
     this.modal.show();
   }
 
-  exportJSON() {
-    const json = JSON.stringify({
-      metadata: this.metadata,
-      features: this.features,
-    });
+  exportAnnotationData() {
+    this.maskApiService.fetchAnnotationData(this.imageId, this.maskId).subscribe(
+      annotationData => this.downloadAnnotationData(annotationData)
+    )
+  }
 
+  private downloadAnnotationData(annotationData: AnnotationData) {
+    const json = JSON.stringify(annotationData);
     const blob = new Blob([json], {
       type: 'application/json'
     });
@@ -51,6 +54,10 @@ export class MaskExportComponent implements AfterViewInit {
       document.body.removeChild(element);
       URL.revokeObjectURL(url);
     }, 0);
+  }
+
+  exportImage() {
+
   }
 
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ApiService } from '../../services/api.service';
-import { ImageInfo } from '../../types/image-info.type';
 import { environment } from '../../../environments/environment';
+import { ImageApiService } from '../../services/image-api.service';
+import { ImageMetadata } from '../../types/image-metadata.type';
 
 @Component({
   selector: 'app-image-list',
@@ -10,25 +10,25 @@ import { environment } from '../../../environments/environment';
 })
 export class ImageListComponent implements OnInit {
   environment = environment;
-  imageInfos: ImageInfo[] = [];
+  imageMetadataList: ImageMetadata[] = [];
   isLoading: boolean = false;
   isDataLoaded: boolean = false;
   deletedImageId: string | null = null;
 
-  constructor(private apiService: ApiService) { }
+  constructor(private imageApiService: ImageApiService) { }
 
   ngOnInit(): void {
-    this.getAllImageInfos();
+    this.getImageMetaData();
   }
 
-  getAllImageInfos(): void {
+  getImageMetaData(): void {
     this.isLoading = true;
     this.isDataLoaded = false;
 
-    this.apiService.fetchBioImageInfos()
+    this.imageApiService.fetchAllImageMetadata()
       .subscribe(
-        imageInfos => {
-          this.imageInfos = imageInfos;
+        metadata => {
+          this.imageMetadataList = metadata;
           this.isLoading = false;
           this.isDataLoaded = true;
         },
@@ -42,9 +42,9 @@ export class ImageListComponent implements OnInit {
 
     this.deletedImageId = id;
 
-    this.apiService.deleteBioImage(id)
+    this.imageApiService.deleteImage(id)
       .subscribe(
-        next => this.getAllImageInfos(),
+        next => this.getImageMetaData(),
         error => {
           this.deletedImageId = null;
           window.alert("Failed to delete image!");

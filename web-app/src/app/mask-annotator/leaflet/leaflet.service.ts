@@ -219,13 +219,13 @@ export class LeafletService {
     return this.createButtonControl(button, 'topleft');
   }
 
-  createExportControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Export segmentation mask', 'export', onClick);
+  createResetFeaturesControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Reset segments and grades', 'restore', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 
-  createResetFeaturesControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Reset segments and grades', 'restore', onClick);
+  createExportControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Export segmentation mask', 'export', onClick);
     return this.createButtonControl(button, 'topleft');
   }
 

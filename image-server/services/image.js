@@ -2,19 +2,19 @@ const fsAsync = require('fs').promises
 const imageSize = require('image-size')
 const sharp = require('sharp')
 
-async function saveImageInfo(imageData, targetPath) {
-	const dimensions = imageSize(imageData.path)
+async function saveImageMetadata(metaData, targetPath) {
+	const dimensions = imageSize(metaData.path)
 	const data = {
-		id: imageData.filename,
-		originalName: imageData.originalname,
-		encoding: imageData.encoding,
-		mimeType: imageData.mimetype,
+		id: metaData.filename,
+		originalName: metaData.originalname,
+		encoding: metaData.encoding,
+		mimeType: metaData.mimetype,
 		width: dimensions.width,
 		height: dimensions.height,
-		size: imageData.size
+		size: metaData.size
 	}
 	const json = JSON.stringify(data)
-	await fsAsync.writeFile(targetPath + '/info.json', json, 'utf8')
+	await fsAsync.writeFile(targetPath + '/metadata.json', json, 'utf8')
 }
 
 async function createThumbnail(sourcePath, targetPath) {
@@ -31,5 +31,5 @@ async function createThumbnail(sourcePath, targetPath) {
 		.toFile(targetPath + '/thumbnail.png')
 }
 
-module.exports.saveImageInfo = saveImageInfo
+module.exports.saveImageMetadata = saveImageMetadata
 module.exports.createThumbnail = createThumbnail

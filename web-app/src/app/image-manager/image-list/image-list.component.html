@@ -1,29 +1,29 @@
 <div id="image-info-list">
   <h4>Uploaded images</h4>
   <div class="spinner-border text-primary" role="status" *ngIf="isLoading"></div>
-  <div class="alert alert-primary" role="alert" *ngIf="imageInfos.length === 0 && !isLoading && isDataLoaded">
+  <div class="alert alert-primary" role="alert" *ngIf="imageMetadataList.length === 0 && !isLoading && isDataLoaded">
     No images found.
   </div>
   <div class="alert alert-danger" role="alert" *ngIf="!isLoading && !isDataLoaded">
     Failed to retrieve images from server!
   </div>
   <ul class="list-group" *ngIf="isDataLoaded">
-    <li class="list-group-item" *ngFor="let imageInfo of imageInfos">
+    <li class="list-group-item" *ngFor="let metadata of imageMetadataList">
       <div class="image-info d-flex">
         <div class="me-3">
-          <a href="/images/{{ imageInfo.id }}">
-            <img src="{{ environment.apiUrl }}/api/images/{{ imageInfo.id }}/thumbnail" width="128" height="128">
+          <a href="/images/{{ metadata.id }}">
+            <img src="{{ environment.apiUrl }}/api/images/{{ metadata.id }}/thumbnail" width="128" height="128">
           </a>
         </div>
         <div class="me-3">
-          <div><strong>File:</strong> {{ imageInfo.originalName }}</div>
-          <div><strong>MIME type:</strong> {{ imageInfo.mimeType }}</div>
-          <div><strong>Resolution:</strong> {{ imageInfo.width }} x {{ imageInfo.height }}</div>
-          <div><strong>Size:</strong> {{ (imageInfo.size / 1048576) | number:'1.0-2' }} MB</div>
+          <div><strong>File:</strong> {{ metadata.originalName }}</div>
+          <div><strong>MIME type:</strong> {{ metadata.mimeType }}</div>
+          <div><strong>Resolution:</strong> {{ metadata.width }} x {{ metadata.height }}</div>
+          <div><strong>Size:</strong> {{ (metadata.size / 1048576) | number:'1.0-2' }} MB</div>
         </div>
         <div>
-          <button type="button" class="btn btn-danger" (click)="deleteImage(imageInfo.id)" *ngIf="deletedImageId !== imageInfo.id">Delete</button>
-          <div class="spinner-border text-primary" role="status" *ngIf="deletedImageId === imageInfo.id"></div>
+          <button type="button" class="btn btn-danger" (click)="deleteImage(metadata.id)" *ngIf="deletedImageId !== metadata.id">Delete</button>
+          <div class="spinner-border text-primary" role="status" *ngIf="deletedImageId === metadata.id"></div>
         </div>
        </div>
     </li>

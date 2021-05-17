@@ -5,8 +5,8 @@ const utils = require('./utils')
 
 const fsAsync = fs.promises
 
-async function getBioImageInfo(id) {
-	const filePath = `images/${id}/info.json`
+async function getImageMetadata(id) {
+	const filePath = `images/${id}/metadata.json`
 	if (await utils.pathExists(filePath)) {
 		const data = await fsAsync.readFile(filePath)
 		return JSON.parse(data)
@@ -15,24 +15,27 @@ async function getBioImageInfo(id) {
 	}
 }
 
-async function getAllBioImageInfo() {
+async function getAllImageMetadata() {
 	if (await utils.pathExists('images')) {
 		const ids = await fsAsync.readdir('images')
 		return await Promise.all(ids.map(async id => {
-			return await getBioImageInfo(id)
+			return await getImageMetadata(id)
 		}))
 	} else {
 		return []
 	}
 }
 
-async function processBioImage(imageData) {
-	const targetPath = 'images/' + imageData.filename
+async function processImage(imageProperties) {
+	const targetPath = 'images/' + imageProperties.filename
 	await fsAsync.mkdir(targetPath, { recursive: true })
-	await imageService.saveImageInfo(imageData, targetPath)
-	await imageService.createThumbnail(imageData.path, targetPath)
-	await convertToTiles(imageData.path, targetPath)
-	await fsAsync.unlink(imageData.path)
+
+	await imageService.saveImageMetadata(imageProperties, targetPath)
+	await imageService.createThumbnail(imageProperties.path, targetPath)
+
+	await convertToTiles(imageProperties.path, targetPath)
+
+	await fsAsync.unlink(imageProperties.path)
 }
 
 async function convertToTiles(sourcePath, targetPath) {
@@ -46,11 +49,11 @@ async function convertToTiles(sourcePath, targetPath) {
 		.toFile(targetPath + '/tiles')
 }
 
-async function deleteBioImage(id) {
+async function deleteImage(id) {
 	await fsAsync.rmdir(`images/${id}`, { recursive: true })
 }
 
-module.exports.getBioImageInfo = getBioImageInfo
-module.exports.getAllBioImageInfo = getAllBioImageInfo
-module.exports.processBioImage = processBioImage
-module.exports.deleteBioImage = deleteBioImage
+module.exports.getImageMetadata = getImageMetadata
+module.exports.getAllImageMetadata = getAllImageMetadata
+module.exports.processImage = processImage
+module.exports.deleteImage = deleteImage

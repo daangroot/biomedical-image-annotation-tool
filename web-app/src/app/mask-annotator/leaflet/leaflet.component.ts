@@ -3,12 +3,14 @@ import * as L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import { Feature, Polygon, MultiPolygon } from 'geojson';
 import { environment } from '../../../environments/environment';
-import { ApiService } from '../../services/api.service';
-import { ImageInfo } from '../../types/image-info.type';
 import { FeatureGrade } from '../../types/feature-grade.type';
 import { LeafletService } from './leaflet.service';
 import { forkJoin } from 'rxjs';
 import { MaskExportComponent } from '../../mask-export/mask-export.component';
+import { ImageApiService } from '../../services/image-api.service';
+import { ImageMetadata } from '../../types/image-metadata.type';
+import { MaskApiService } from '../../services/mask-api.service';
+import { AnnotationData } from '../../types/annotation-data.type';
 
 @Component({
   selector: 'app-leaflet',
@@ -16,8 +18,10 @@ import { MaskExportComponent } from '../../mask-export/mask-export.component';
   styleUrls: ['./leaflet.component.css']
 })
 export class LeafletComponent implements OnInit, AfterViewInit {
-  @Input() bioImageInfo!: ImageInfo;
+  @Input() imageId!: string;
   @Input() maskId!: string;
+  @Input() imageMetadata!: ImageMetadata;
+  @ViewChild(MaskExportComponent) private maskExportComponent!: MaskExportComponent;
   headerHeight!: number;
   showBaseMap: boolean = false;
   private baseMap!: L.Map;
@@ -27,7 +31,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private swMax!: L.PointTuple;
   private neMax!: L.PointTuple;
   private maxNativeZoom!: number;
-  private geoJsonLayer!: L.GeoJSON;
+  private featuresLayer!: L.GeoJSON;
 
   private showTopLeftControlsControl!: L.Control;
   private hideTopLeftControlsControl!: L.Control;
@@ -41,8 +45,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private featureEditUndoControl!: L.Control;
   private setOverallScoreControl!: L.Control;
   private saveFeaturesControl!: L.Control;
-  private exportControl!: L.Control;
   private resetFeaturesControl!: L.Control;
+  private exportControl!: L.Control;
   private unsavedChangesControl!: L.Control;
 
   private showTopLeftControls: boolean = true;
@@ -59,11 +63,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private readonly tileSize: number = 128;
   private readonly maxSimplifyTolerance: number = 10000;
 
-  @ViewChild(MaskExportComponent)
-  private maskExportComponent!: MaskExportComponent;
-
   constructor(
-    private apiService: ApiService,
+    private imageApiService: ImageApiService,
+    private maskApiService: MaskApiService,
     private leafletService: LeafletService
   ) { }
 
@@ -73,8 +75,21 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.initMaskMap();
-    this.updateGeoJson();
-    this.updateMetadata();
+    this.updateAnnotationData();
+  }
+
+  private updateAnnotationData(): void {
+    this.features = new Map();
+    this.featureLayers = new Map();
+    this.featuresLayer.clearLayers();
+
+    this.maskApiService.fetchAnnotationData(this.imageId, this.maskId).subscribe(
+      annotationData => {
+        this.featuresLayer.addData(annotationData.features as any);
+        this.overallScore = annotationData.overallScore;
+      },
+      error => window.alert('Failed to retrieve annotation data from server!')
+    )
   }
 
   private initBaseMap(): void {
@@ -102,14 +117,14 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private initMaskMap(): void {
-    this.sw = [0, this.bioImageInfo.height];
-    this.ne = [this.bioImageInfo.width, 0];
+    this.sw = [0, this.imageMetadata.height];
+    this.ne = [this.imageMetadata.width, 0];
     const offset: number = this.tileSize * 5;
     const offsetTop = this.tileSize * 15;
     this.swMax = [this.sw[0] - offset, this.sw[1] + offset];
     this.neMax = [this.ne[0] + offset, this.ne[1] - offsetTop];
 
-    this.maxNativeZoom = this.leafletService.calcMaxNativeZoomLevel(this.bioImageInfo.width, this.bioImageInfo.height, this.tileSize);
+    this.maxNativeZoom = this.leafletService.calcMaxNativeZoomLevel(this.imageMetadata.width, this.imageMetadata.height, this.tileSize);
     this.leafletService.setMaxNativeZoom(this.maxNativeZoom);
 
     this.maskMap = this.leafletService.createMap('leaflet-viewer-mask');
@@ -119,7 +134,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.addTileLayer(this.maskMap);
 
-    this.geoJsonLayer = L.geoJSON(undefined, {
+    this.featuresLayer = L.geoJSON(undefined, {
       coordsToLatLng: (coords: L.PointTuple) => this.leafletService.toLatLng(coords),
       onEachFeature: (feature: Feature<Polygon, any>, layer) => this.onEachFeature(feature, layer),
       style: (feature: any) => this.determineFeatureStyle(feature),
@@ -149,7 +164,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private addTileLayer(map: L.Map) {
-    L.tileLayer(`${environment.apiUrl}/api/images/${this.bioImageInfo.id}/tiles/{z}/{y}/{x}`, {
+    L.tileLayer(`${environment.apiUrl}/api/images/${this.imageId}/tiles/{z}/{y}/{x}`, {
       bounds: L.latLngBounds(this.leafletService.toLatLng(this.sw), this.leafletService.toLatLng(this.ne)),
       tileSize: this.tileSize,
       maxNativeZoom: this.maxNativeZoom
@@ -161,6 +176,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       position: 'bottomright'
     }).addTo(this.maskMap);
 
+    
     this.showTopLeftControlsControl = this.leafletService.createShowControlsControl(() => this.toggleTopLeftControls());
     this.hideTopLeftControlsControl = this.leafletService.createHideControlsControl(() => this.toggleTopLeftControls());
     this.splitScreenControl = this.leafletService.createSplitScreenControl(() => this.toggleBaseMap());
@@ -174,10 +190,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
     this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveChanges());
     this.exportControl = this.leafletService.createExportControl(() => this.exportMask());
-    this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetFeatures());
-    this.unsavedChangesControl = this.leafletService.createUnsavedChangesControl();
-
-    this.unsavedChangesControl.addTo(this.maskMap);
+    this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetAnnotationData());
+    this.unsavedChangesControl = this.leafletService.createUnsavedChangesControl().addTo(this.maskMap);
 
     this.updateTopLeftControls();
   }
@@ -219,8 +233,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeAllInnerRingsControl.addTo(this.maskMap);
     this.setOverallScoreControl.addTo(this.maskMap);
     this.saveFeaturesControl.addTo(this.maskMap);
-    this.exportControl.addTo(this.maskMap);
     this.resetFeaturesControl.addTo(this.maskMap);
+    this.exportControl.addTo(this.maskMap);
   }
 
   private toggleTopLeftControls() {
@@ -414,26 +428,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     return gradingContainer;
   }
 
-  private updateGeoJson(): void {
-    this.features = new Map();
-    this.featureLayers = new Map();
-    this.geoJsonLayer.clearLayers();
-
-    this.apiService.fetchFeatures(this.bioImageInfo.id, this.maskId).subscribe(
-      features => this.geoJsonLayer.addData(features as any),
-      error => window.alert('Failed to retrieve GeoJSON from server!')
-    )
-  }
-
-  private updateMetadata(): void {
-    this.overallScore = null;
-
-    this.apiService.fetchMetadata(this.bioImageInfo.id, this.maskId).subscribe(
-      metadata => this.overallScore = metadata.overallScore,
-      error => window.alert('Failed to retrieve mask metadata from server!')
-    )
-  }
-
   private determineFeatureStyle(feature: Feature<Polygon, any>): L.PathOptions {
     if (!feature.properties) {
       return {};
@@ -453,11 +447,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     let fid = 0;
-    if (feature.properties.FID == null) {
+    if (feature.properties.fid == null) {
       fid = this.maxFid + 1;
-      feature.properties.FID = fid;
+      feature.properties.fid = fid;
     } else {
-      fid = feature.properties.FID;
+      fid = feature.properties.fid;
     }
     if (fid > this.maxFid) {
       this.maxFid = fid;
@@ -479,7 +473,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
     this.featureLayers.get(fid)?.remove();
-    this.geoJsonLayer.addData(this.features.get(fid)!);
+    this.featuresLayer.addData(this.features.get(fid)!);
 
     if (openPopup) {
       this.featureLayers.get(fid)!.openPopup();
@@ -507,7 +501,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     layer.remove();
 
     const feature = this.leafletService.layerToFeature(layer);
-    this.geoJsonLayer.addData(feature);
+    this.featuresLayer.addData(feature);
 
     const prevFeature = JSON.parse(JSON.stringify(feature));
     prevFeature.geometry = null;
@@ -523,7 +517,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private cutFeature(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon, any>): void {
     if (!feature) { // Feature is cutted out completely.
       this.addToFeatureEditUndoStack([prevFeature]);
-      this.removeFeature(prevFeature.properties.FID);
+      this.removeFeature(prevFeature.properties.fid);
       return;
     }
 
@@ -544,7 +538,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
           latLng => this.leafletService.toPoint(L.latLng(latLng[1], latLng[0]))
         )
       )
-      this.geoJsonLayer.addData(feature);
+      this.featuresLayer.addData(feature);
 
       const prevFeature = JSON.parse(JSON.stringify(feature));
       prevFeature.geometry = null;
@@ -553,8 +547,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.addToFeatureEditUndoStack(undoFeatures);
 
-    this.removeFeature(feature.properties.FID);
-    this.removeFeature(prevFeature.properties.FID);
+    this.removeFeature(feature.properties.fid);
+    this.removeFeature(prevFeature.properties.fid);
   }
 
   private simplifyFeature(fid: number, openPopup: boolean = false): boolean {
@@ -580,7 +574,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     for (const feature of this.features.values()) {
       const copy = JSON.parse(JSON.stringify(feature));
-      const isSimplified = this.simplifyFeature(feature.properties.FID);
+      const isSimplified = this.simplifyFeature(feature.properties.fid);
       if (isSimplified) {
         simplifiedFeatures.push(copy);
       }
@@ -601,7 +595,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     for (const feature of this.features.values()) {
       if (feature.geometry.coordinates.length > 1) {
         featuresWithInnerRing.push(JSON.parse(JSON.stringify(feature)));
-        this.removeInnerRings(feature.properties.FID);
+        this.removeInnerRings(feature.properties.fid);
       }
     }
 
@@ -615,46 +609,47 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private saveChanges(): void {
-    const putFeatures = this.apiService.putFeatures(this.bioImageInfo.id, this.maskId, Array.from(this.features.values()));
-    const putMetadata = this.apiService.putMetadata(this.bioImageInfo.id, this.maskId, { overallScore: this.overallScore });
-
-    forkJoin([putFeatures, putMetadata]).subscribe(
-        next => {
-          this.setUnsavedChanges(false);
-          window.alert('Segments and grades have been saved successfully.');
-        },
-        error => window.alert('Failed to save segments and grades!')
-      )
-  }
-
-  private exportMask(): void {
-    const features = Array.from(this.features.values());
-    const metadata = { overallScore: this.overallScore };
-    this.maskExportComponent.show(features, metadata);
-  }
-
-  private resetFeatures(): void {
-    if (!window.confirm("Are you sure you want to reset all segments and grades? This will undo all saved changes and reset the mask to the original state.")) {
-      return;
+    const annotationData: AnnotationData = {
+      features: Array.from(this.features.values()),
+      overallScore: this.overallScore
     }
 
-    this.apiService.deleteFeatures(this.bioImageInfo.id, this.maskId)
-      .subscribe(
-        next => this.updateGeoJson(),
-        error => window.alert('Failed to reset segments and grades!')
-      );
-
-    this.apiService.putMetadata(this.bioImageInfo.id, this.maskId, { overallScore: null })
-      .subscribe(
-        next => this.updateMetadata(),
-        error => window.alert('Failed to reset mask metadata!')
-      );
+    this.maskApiService.saveAnnotationData(this.imageId, this.maskId, annotationData).subscribe(
+      next => {
+        this.setUnsavedChanges(false);
+        window.alert('Segments and grades have been saved successfully.');
+      },
+      error => window.alert('Failed to save segments and grades!')
+    );
   }
 
   private setUnsavedChanges(unsavedChanges: boolean) {
     this.unsavedChanges = unsavedChanges;
     // @ts-ignore
-    this.unsavedChangesControl.setVisible(this.unsavedChanges);
+    this.unsavedChangesControl.setVisible(unsavedChanges);
+  }
+
+  private resetAnnotationData(): void {
+    if (!window.confirm("Are you sure you want to reset all segments and grades? This will undo all saved changes and reset the mask to the original state.")) {
+      return;
+    }
+
+    this.maskApiService.resetAnnotationData(this.imageId, this.maskId).subscribe(
+      next => {
+        this.updateAnnotationData();
+        this.setUnsavedChanges(false);
+      },
+      error => window.alert('Failed to reset segments and grades!')
+    )
+  }
+
+  private exportMask(): void {
+    if (this.unsavedChanges) {
+      window.alert('Changes must be saved before the mask can be exported.');
+      return;
+    }
+
+    this.maskExportComponent.show(this.imageId, this.maskId);
   }
 
   private addToFeatureEditUndoStack(features: Feature<Polygon, any>[]): void {
@@ -666,6 +661,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureEditUndoStack.push(copy);
 
     this.featureEditUndoControl.addTo(this.maskMap);
+    this.setUnsavedChanges(true);
   }
 
   private undoFeatureEdit(): void {
@@ -677,11 +673,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     for (const feature of prevFeatures) {
       if (feature.geometry === null) {
         // Feature was created before undo, so remove it.
-        this.removeFeature(feature.properties.FID);
+        this.removeFeature(feature.properties.fid);
         continue;
       }
 
-      const fid = feature.properties.FID;
+      const fid = feature.properties.fid;
       this.features.set(fid, feature);
       this.updateFeatureLayer(fid);
 
@@ -694,7 +690,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
         color: 'yellow'
       });
       setTimeout(() => {
-        this.geoJsonLayer.resetStyle(layer);
+        this.featuresLayer.resetStyle(layer);
       }, 1500);
     }
     
