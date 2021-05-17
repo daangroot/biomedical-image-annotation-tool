@@ -69,6 +69,9 @@ def rasterize():
 
     gdal.RasterizeLayer(target_ds, [1], src_layer)
 
+    src_ds = None
+    target_ds = None
+
     @after_this_request 
     def remove_files(response): 
         path.unlink()

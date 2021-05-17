@@ -1,21 +1,13 @@
 const fs = require('fs')
 const sharp = require('sharp')
 const imageService = require('./image')
+const utils = require('./utils')
 
 const fsAsync = fs.promises
 
-async function pathExists(path) {
-	try {
-		await fsAsync.access(path, fs.constants.F_OK)
-		return true
-	} catch {
-		return false
-	}
-}
-
 async function getBioImageInfo(id) {
 	const filePath = `images/${id}/info.json`
-	if (await pathExists(filePath)) {
+	if (await utils.pathExists(filePath)) {
 		const data = await fsAsync.readFile(filePath)
 		return JSON.parse(data)
 	} else {
@@ -24,7 +16,7 @@ async function getBioImageInfo(id) {
 }
 
 async function getAllBioImageInfo() {
-	if (await pathExists('images')) {
+	if (await utils.pathExists('images')) {
 		const ids = await fsAsync.readdir('images')
 		return await Promise.all(ids.map(async id => {
 			return await getBioImageInfo(id)

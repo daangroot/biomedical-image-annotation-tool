@@ -27,6 +27,20 @@ router.get('/images/:id/masks/info', async (req, res) => {
 	}
 })
 
+router.get('/images/:id/masks/:maskId', async (req, res) => {
+	const bioImageId = req.params.id
+	const maskId = req.params.maskId
+	try {
+		const maskInfo = await service.getMaskImageInfo(bioImageId, maskId)
+		res.header('Content-Disposition', `attachment; filename="${maskInfo.originalName}"`)
+		const stream = await service.generateMaskImage(bioImageId, maskId)
+		stream.pipe(res)
+	} catch (error) {
+		console.error(error)
+		res.sendStatus(500)
+	}
+})
+
 router.delete('/images/:id/masks/:maskId', async (req, res) => {
 	const bioImageId = req.params.id
 	const maskId = req.params.maskId
@@ -37,6 +51,12 @@ router.delete('/images/:id/masks/:maskId', async (req, res) => {
 		console.error(error)
 		res.sendStatus(500)
 	}
+})
+
+router.get('/images/:id/masks/:maskId/thumbnail', (req, res) => {
+	const bioImageId = req.params.id
+	const maskId = req.params.maskId
+	res.sendFile(`${__rootdir}/images/${bioImageId}/masks/${maskId}/thumbnail.png`)
 })
 
 router.get('/images/:id/masks/:maskId/info', async (req, res) => {
@@ -79,18 +99,12 @@ router.delete('/images/:id/masks/:maskId/geojson', async (req, res) => {
 	const bioImageId = req.params.id
 	const maskId = req.params.maskId
 	try {
-		await service.deleteGeoJson(bioImageId, maskId)
+		await service.resetGeoJson(bioImageId, maskId)
 		res.end()
 	} catch (error) {
 		console.error(error)
 		res.sendStatus(500)
 	}
-})
-
-router.get('/images/:id/masks/:maskId/thumbnail', (req, res) => {
-	const bioImageId = req.params.id
-	const maskId = req.params.maskId
-	res.sendFile(`${__rootdir}/images/${bioImageId}/masks/${maskId}/thumbnail.png`)
 })
 
 router.get('/images/:id/masks/:maskId/metadata', async (req, res) => {

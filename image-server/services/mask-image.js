@@ -2,23 +2,15 @@ const axios = require('axios').default
 const FormData = require('form-data')
 const fs = require('fs')
 const imageService = require('./image')
+const utils = require('./utils')
 
 const fsAsync = fs.promises
 
 const GDAL_SERVER_URL = 'http://localhost:5000'
 
-async function pathExists(path) {
-	try {
-		await fsAsync.access(path, fs.constants.F_OK)
-		return true
-	} catch {
-		return false
-	}
-}
-
 async function getMaskImageInfo(bioImageId, maskId) {
 	const filePath = `images/${bioImageId}/masks/${maskId}/info.json`
-	if (await pathExists(filePath)) {
+	if (await utils.pathExists(filePath)) {
 		const data = await fsAsync.readFile(filePath)
 		return JSON.parse(data)
 	} else {
@@ -29,7 +21,7 @@ async function getMaskImageInfo(bioImageId, maskId) {
 async function getAllMaskImageInfo(bioImageId) {
 	const maskInfos = []
 	const masksPath = `images/${bioImageId}/masks`
-	if (await pathExists(masksPath)) {
+	if (await utils.pathExists(masksPath)) {
 		const maskIds = await fsAsync.readdir(masksPath)
 		for (const maskId of maskIds) {
 			const maskInfo = await getMaskImageInfo(bioImageId, maskId)
@@ -40,6 +32,18 @@ async function getAllMaskImageInfo(bioImageId) {
 	}
 
 	return maskInfos
+}
+
+async function generateMaskImage(bioImageId, maskId) {
+	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
+	const data = await fsAsync.readFile(filePath)
+	const json = JSON.parse(data)
+
+	const response = await axios.post(GDAL_SERVER_URL + '/rasterize', json, {
+		responseType: 'stream'
+	})
+
+	return response.data
 }
 
 async function processMaskImage(bioImageId, imageData) {
@@ -66,21 +70,14 @@ async function maskToGeoJson(sourcePath, targetPath) {
 	})
 
 	const json = JSON.stringify(response.data)
-	await fsAsync.writeFile(targetPath + '/geojson.json', json)
+	await fsAsync.writeFile(targetPath + '/geojson_original.json', json)
+	await fsAsync.writeFile(targetPath + '/geojson_updated.json', json)
 }
 
 async function getGeoJson(bioImageId, maskId) {
 	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
-	const filePathOriginal = `images/${bioImageId}/masks/${maskId}/geojson.json`
-	if (await pathExists(filePath)) {
-		const data = await fsAsync.readFile(filePath)
-		return JSON.parse(data)
-	} else if (await pathExists(filePathOriginal)) {
-		const data = await fsAsync.readFile(filePathOriginal)
-		return JSON.parse(data)
-	} else {
-		return null
-	}
+	const data = await fsAsync.readFile(filePath)
+	return JSON.parse(data)
 }
 
 async function saveGeoJson(bioImageId, maskId, json) {
@@ -88,21 +85,16 @@ async function saveGeoJson(bioImageId, maskId, json) {
 	await fsAsync.writeFile(filePath, json)
 }
 
-async function deleteGeoJson(bioImageId, maskId) {
+async function resetGeoJson(bioImageId, maskId) {
 	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
-	if (await pathExists(filePath)) {
-		await fsAsync.unlink(filePath);
-	}
+	const filePathOriginal = `images/${bioImageId}/masks/${maskId}/geojson_original.json`
+	await fsAsync.copyFile(filePathOriginal, filePath)
 }
 
 async function getMetadata(bioImageId, maskId) {
 	const filePath = `images/${bioImageId}/masks/${maskId}/metadata.json`
-	if (await pathExists(filePath)) {
-		const data = await fsAsync.readFile(filePath)
-		return JSON.parse(data)
-	} else {
-		return null
-	}
+	const data = await fsAsync.readFile(filePath)
+	return JSON.parse(data)
 }
 
 async function saveMetadata(bioImageId, maskId, json) {
@@ -116,10 +108,11 @@ async function deleteMaskImage(bioImageId, maskId) {
 
 module.exports.getMaskImageInfo = getMaskImageInfo
 module.exports.getAllMaskImageInfo = getAllMaskImageInfo
+module.exports.generateMaskImage = generateMaskImage
 module.exports.processMaskImage = processMaskImage
 module.exports.getGeoJson = getGeoJson
 module.exports.saveGeoJson = saveGeoJson
-module.exports.deleteGeoJson = deleteGeoJson
+module.exports.resetGeoJson = resetGeoJson
 module.exports.getMetadata = getMetadata
 module.exports.saveMetadata = saveMetadata
 module.exports.deleteMaskImage = deleteMaskImage
