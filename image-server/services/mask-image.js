@@ -1,10 +1,11 @@
+const axios = require('axios').default
+const FormData = require('form-data')
 const fs = require('fs')
-const shapefile = require('shapefile')
-const workerFarm = require('worker-farm')
 const imageService = require('./image')
 
 const fsAsync = fs.promises
-const workers = workerFarm(require.resolve('./shapefile-worker'))
+
+const GDAL_SERVER_URL = 'http://localhost:5000'
 
 async function pathExists(path) {
 	try {
@@ -48,41 +49,23 @@ async function processMaskImage(bioImageId, imageData) {
 	await imageService.saveImageInfo(imageData, targetPath)
 	await imageService.createThumbnail(imageData.path, targetPath)
 
-	await maskToShapefile(imageData.path, targetPath)
-	await shapefileToGeoJson(targetPath + '/polygons.shp', targetPath)
+	await maskToGeoJson(imageData.path, targetPath)
 
 	const metadata = { overallScore: null }
 	await fsAsync.writeFile(targetPath + '/metadata.json', JSON.stringify(metadata))
 
 	await fsAsync.unlink(imageData.path)
-	await fsAsync.unlink(targetPath + '/polygons.dbf')
-	await fsAsync.unlink(targetPath + '/polygons.shp')
-	await fsAsync.unlink(targetPath + '/polygons.shx')
 }
 
-async function maskToShapefile(sourcePath, targetPath) {
-	return new Promise(resolve => 
-		workers(sourcePath, targetPath, resolve)
-	)
-}
+async function maskToGeoJson(sourcePath, targetPath) {
+	const form = new FormData()
+	form.append('file', fs.createReadStream(sourcePath))
 
-async function shapefileToGeoJson(sourcePath, targetPath) {
-	const features = []
-	const source = await shapefile.open(sourcePath)
-	let data = await source.read()
-	while (!data.done) {
-		features.push(data.value)
-		data = await source.read()
-	}
+	const response = await axios.post(GDAL_SERVER_URL + '/polygonize', form, {
+		headers: form.getHeaders()
+	})
 
-	for (feature of features) {
-		if (feature.geometry.type === 'MultiPolygon') {
-			feature.geometry.type = 'Polygon'
-			feature.geometry.coordinates = feature.geometry.coordinates.flat();
-		}
-	}
-
-	const json = JSON.stringify(features)
+	const json = JSON.stringify(response.data)
 	await fsAsync.writeFile(targetPath + '/geojson.json', json)
 }
 
