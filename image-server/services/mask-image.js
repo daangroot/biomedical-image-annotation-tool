@@ -35,9 +35,16 @@ async function getAllMaskImageInfo(bioImageId) {
 }
 
 async function generateMaskImage(bioImageId, maskId) {
+	const maskInfo = await getMaskImageInfo(bioImageId, maskId)
+
 	const filePath = `images/${bioImageId}/masks/${maskId}/geojson_updated.json`
-	const data = await fsAsync.readFile(filePath)
-	const json = JSON.parse(data)
+	const features = await fsAsync.readFile(filePath)
+
+	const json = {
+		width: maskInfo.width,
+		height: maskInfo.height,
+		features: JSON.parse(features)
+	}
 
 	const response = await axios.post(GDAL_SERVER_URL + '/rasterize', json, {
 		responseType: 'stream'

@@ -51,9 +51,14 @@ def polygonize():
 
 @app.route('/rasterize', methods=['POST'])
 def rasterize():
+    data = request.get_json()
+    width = data['width']
+    height = data['height']
+    features = data['features']
+
     geojson = {
         'type': 'FeatureCollection',
-        'features': request.get_json()
+        'features': features
     }
 
     path = Path(UPLOAD_FOLDER) / (str(uuid.uuid1()) + '.json')
@@ -65,7 +70,7 @@ def rasterize():
     src_ds = ogr.Open(str(path))
     src_layer = src_ds.GetLayer(0)
     driver = gdal.GetDriverByName('GTiff')
-    target_ds = driver.Create(str(out_path), 16384, 16384)
+    target_ds = driver.Create(str(out_path), width, height)
 
     gdal.RasterizeLayer(target_ds, [1], src_layer)
 
