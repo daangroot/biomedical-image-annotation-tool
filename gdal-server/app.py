@@ -11,22 +11,29 @@ OUTPUT_FOLDER = APP_FOLDER + '/output'
 
 app = Flask(__name__)
 
-def save_file(file):
+
+def save_file(stream):
     name = str(uuid.uuid1())
     path = Path(UPLOAD_FOLDER) / name
-    file.save(path)
+    with open(path, 'bw') as file:
+        chunk_size = 4096
+        chunk = stream.read(chunk_size)
+        while len(chunk) != 0:
+            file.write(chunk)
+            chunk = stream.read(chunk_size)
     return path
+
 
 @app.before_first_request
 def before_first_request():
     Path(UPLOAD_FOLDER).mkdir(exist_ok=True)
     Path(OUTPUT_FOLDER).mkdir(exist_ok=True)
 
+
 @app.route('/polygonize', methods=['POST'])
 def polygonize():
-    file = request.files['file']
-    path = save_file(file)
-    
+    path = save_file(request.stream)
+
     shp_name = path.name
     out_path = Path(OUTPUT_FOLDER) / (shp_name + '.json')
 
@@ -41,13 +48,14 @@ def polygonize():
     target_ds = None
 
     @after_this_request 
-    def remove_files(response): 
+    def remove_files(response):
         path.unlink()
         out_path.unlink()
         return response
 
     with open(out_path) as file:
         return jsonify(json.load(file)['features'])
+
 
 @app.route('/rasterize', methods=['POST'])
 def rasterize():
@@ -77,8 +85,8 @@ def rasterize():
     src_ds = None
     target_ds = None
 
-    @after_this_request 
-    def remove_files(response): 
+    @after_this_request
+    def remove_files(response):
         path.unlink()
         out_path.unlink()
         return response

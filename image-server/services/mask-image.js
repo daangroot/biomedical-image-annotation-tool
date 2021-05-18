@@ -75,13 +75,11 @@ async function createAnnotationData(sourcePath, targetPath) {
 }
 
 async function maskToGeoJson(sourcePath) {
-	const form = new FormData()
-	form.append('file', fs.createReadStream(sourcePath))
-
-	const response = await axios.post(GDAL_SERVER_URL + '/polygonize', form, {
-		headers: form.getHeaders()
+	const stream = fs.createReadStream(sourcePath)
+	const response = await axios.post(GDAL_SERVER_URL + '/polygonize', stream, {
+		maxContentLength: Infinity,
+		maxBodyLength: Infinity
 	})
-
 	return response.data
 }
 
