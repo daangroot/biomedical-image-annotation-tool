@@ -5,9 +5,7 @@ import { Feature, Polygon, MultiPolygon } from 'geojson';
 import { environment } from '../../../environments/environment';
 import { FeatureGrade } from '../../types/feature-grade.type';
 import { LeafletService } from './leaflet.service';
-import { forkJoin } from 'rxjs';
 import { MaskExportComponent } from '../../mask-export/mask-export.component';
-import { ImageApiService } from '../../services/image-api.service';
 import { ImageMetadata } from '../../types/image-metadata.type';
 import { MaskApiService } from '../../services/mask-api.service';
 import { AnnotationData } from '../../types/annotation-data.type';
@@ -65,7 +63,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private readonly maxSimplifyTolerance: number = 10000;
 
   constructor(
-    private imageApiService: ImageApiService,
     private maskApiService: MaskApiService,
     private leafletService: LeafletService
   ) { }
@@ -80,6 +77,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private updateAnnotationData(): void {
+    this.maxFid = -1;
     this.features = new Map();
     this.featureLayers = new Map();
     this.featuresLayer.clearLayers();
