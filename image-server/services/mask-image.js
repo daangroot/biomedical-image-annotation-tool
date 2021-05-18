@@ -6,7 +6,7 @@ const utils = require('./utils')
 
 const fsAsync = fs.promises
 
-const GDAL_SERVER_URL = 'http://localhost:5000'
+const GDAL_SERVER_URL = process.env.GDAL_SERVER_URL || 'http://localhost:5000'
 
 async function getMaskMetadata(imageId, maskId) {
 	const filePath = `images/${imageId}/masks/${maskId}/metadata.json`

@@ -8,6 +8,8 @@ services:
     build: ./image-server
     ports:
       - "8080:8080"
+    environment:
+      - GDAL_SERVER_URL=http://gdal-server:5000
   gdal-server:
     build: ./gdal-server
     ports:
