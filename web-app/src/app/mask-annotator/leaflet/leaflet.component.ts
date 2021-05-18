@@ -21,6 +21,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   @Input() imageId!: string;
   @Input() maskId!: string;
   @Input() imageMetadata!: ImageMetadata;
+  @Input() maskMetadata!: ImageMetadata;
   @ViewChild(MaskExportComponent) private maskExportComponent!: MaskExportComponent;
   headerHeight!: number;
   showBaseMap: boolean = false;
@@ -649,7 +650,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    this.maskExportComponent.show(this.imageId, this.maskId);
+    this.maskExportComponent.show(this.imageId, this.maskMetadata);
   }
 
   private addToFeatureEditUndoStack(features: Feature<Polygon, any>[]): void {

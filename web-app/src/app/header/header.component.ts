@@ -1,6 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { ImageApiService } from '../services/image-api.service';
-import { MaskApiService } from '../services/mask-api.service';
 import { ImageMetadata } from '../types/image-metadata.type';
 import { HeaderService } from './header.service';
 

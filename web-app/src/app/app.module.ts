@@ -4,20 +4,18 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { HeaderComponent } from './header/header.component';
 import { ApiInterceptor } from './http-interceptors/api-interceptor';
-import { HelpComponent } from './help/help.component';
+import { HeaderModule } from './header/header.module';
 
 @NgModule({
   declarations: [
-    AppComponent,
-    HeaderComponent,
-    HelpComponent
+    AppComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    HeaderModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: ApiInterceptor, multi: true }

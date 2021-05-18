@@ -5,8 +5,6 @@ import { MaskAnnotatorRoutingModule } from './mask-annotator-routing.module';
 import { LeafletComponent } from './leaflet/leaflet.component';
 import { MaskExportModule } from '../mask-export/mask-export.module';
 
-
-
 @NgModule({
   declarations: [
     MaskAnnotatorComponent,
@@ -14,8 +12,8 @@ import { MaskExportModule } from '../mask-export/mask-export.module';
   ],
   imports: [
     CommonModule,
-    MaskAnnotatorRoutingModule,
-    MaskExportModule
+    MaskExportModule,
+    MaskAnnotatorRoutingModule
   ]
 })
 export class MaskAnnotatorModule { }

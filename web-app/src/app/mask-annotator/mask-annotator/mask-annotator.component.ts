@@ -14,6 +14,7 @@ export class MaskAnnotatorComponent implements OnInit {
   imageId!: string;
   maskId!: string;
   imageMetadata!: ImageMetadata;
+  maskMetadata!: ImageMetadata;
   
   constructor(
     private route: ActivatedRoute,
@@ -26,11 +27,10 @@ export class MaskAnnotatorComponent implements OnInit {
     const routeParams: ParamMap = this.route.snapshot.paramMap;
     this.imageId = routeParams.get('imageId')!;
     this.maskId = routeParams.get('maskId')!;
-    this.getImageMetadata();
-    this.getMaskMetadata();
+    this.getMetadata();
   }
 
-  getImageMetadata(): void {
+  private getMetadata(): void {
     this.imageApiService.fetchImageMetadata(this.imageId).subscribe(
       metadata => {
         this.imageMetadata = metadata;
@@ -38,11 +38,12 @@ export class MaskAnnotatorComponent implements OnInit {
       },
       error => window.alert('Failed to retrieve image metadata from server!')
     )
-  }
 
-  getMaskMetadata(): void {
     this.maskApiService.fetchMaskMetadata(this.imageId, this.maskId).subscribe(
-      metadata => this.headerService.setMaskMetadata(metadata),
+      metadata => {
+        this.maskMetadata = metadata;
+        this.headerService.setMaskMetadata(metadata);
+      },
       error => window.alert('Failed to retrieve mask metadata from server!')
     )
   }

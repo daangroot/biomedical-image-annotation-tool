@@ -7,8 +7,6 @@ import { MaskUploadComponent } from './mask-upload/mask-upload.component';
 import { ImageInfoComponent } from './image-info/image-info.component';
 import { MaskExportModule } from '../mask-export/mask-export.module';
 
-
-
 @NgModule({
   declarations: [
     MaskManagerComponent,
@@ -18,8 +16,8 @@ import { MaskExportModule } from '../mask-export/mask-export.module';
   ],
   imports: [
     CommonModule,
-    MaskManagerRoutingModule,
-    MaskExportModule
+    MaskExportModule,
+    MaskManagerRoutingModule
   ]
 })
 export class MaskManagerModule { }

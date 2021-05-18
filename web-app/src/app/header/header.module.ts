@@ -1,16 +1,16 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MaskExportComponent } from './mask-export.component';
+import { HeaderComponent } from './header.component';
 
 @NgModule({
   declarations: [
-    MaskExportComponent
+    HeaderComponent
   ],
   imports: [
     CommonModule
   ],
   exports: [
-    MaskExportComponent
+    HeaderComponent
   ]
 })
-export class MaskExportModule { }
+export class HeaderModule { }

@@ -22,7 +22,7 @@
           <div><strong>Size:</strong> {{ (metadata.size / 1048576) | number:'1.0-2' }} MB</div>
         </div>
         <div class="me-3">
-          <button type="button" class="btn btn-primary" (click)="maskExportComponent.show(imageId, metadata.id)">Export</button>
+          <button type="button" class="btn btn-primary" (click)="maskExportComponent.show(imageId, metadata)">Export</button>
         </div>
         <div>
           <button type="button" class="btn btn-danger" (click)="deleteMask(metadata.id)" *ngIf="deletedMaskId !== metadata.id">Delete</button>

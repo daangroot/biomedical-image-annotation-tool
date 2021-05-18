@@ -6,8 +6,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <button type="button" class="btn btn-primary me-3" (click)="exportAnnotationData()">Export as JSON</button>
-        <a class="btn btn-primary" href="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ maskId }}" *ngIf="imageId">Export as image</a>
+        <div class="mb-2">
+          <button type="button" class="btn btn-primary" (click)="exportAnnotationData()" *ngIf="!isLoading">Export JSON</button>
+          <div class="spinner-border text-primary" role="status" *ngIf="isLoading"></div>
+        </div>
+        <div>
+          <a class="btn btn-primary" href="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ maskId }}" download *ngIf="imageId">Export image</a>
+        </div>
       </div>
     </div>
   </div>
