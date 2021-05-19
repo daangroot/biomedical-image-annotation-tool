@@ -695,6 +695,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     if (this.featureEditUndoStack.length === 0) {
       this.featureEditUndoControl.remove();
     }
+
+    this.setUnsavedChanges(true);
   }
 
   private setOverallScore() {
