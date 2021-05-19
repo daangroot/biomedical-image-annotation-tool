@@ -118,10 +118,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private initMaskMap(): void {
     this.sw = [0, this.imageMetadata.height];
     this.ne = [this.imageMetadata.width, 0];
-    const offset: number = this.tileSize * 5;
-    const offsetTop = this.tileSize * 15;
+    const offset: number = this.tileSize * 20;
     this.swMax = [this.sw[0] - offset, this.sw[1] + offset];
-    this.neMax = [this.ne[0] + offset, this.ne[1] - offsetTop];
+    this.neMax = [this.ne[0] + offset, this.ne[1] - offset];
 
     this.maxNativeZoom = this.leafletService.calcMaxNativeZoomLevel(this.imageMetadata.width, this.imageMetadata.height, this.tileSize);
     this.leafletService.setMaxNativeZoom(this.maxNativeZoom);
