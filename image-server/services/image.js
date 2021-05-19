@@ -1,9 +1,11 @@
-const fsAsync = require('fs').promises
+const fs = require('fs')
+const fsAsync = fs.promises
 const imageSize = require('image-size')
+const probe = require('probe-image-size')
 const sharp = require('sharp')
 
 async function saveImageMetadata(metaData, targetPath) {
-	const dimensions = imageSize(metaData.path)
+	const dimensions = await probe(fs.createReadStream(metaData.path))
 	const data = {
 		id: metaData.filename,
 		originalName: metaData.originalname,

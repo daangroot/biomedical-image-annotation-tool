@@ -1,9 +1,8 @@
 const fs = require('fs')
+const fsAsync = fs.promises
 const sharp = require('sharp')
 const imageService = require('./image')
 const utils = require('./utils')
-
-const fsAsync = fs.promises
 
 async function getImageMetadata(id) {
 	const filePath = `images/${id}/metadata.json`

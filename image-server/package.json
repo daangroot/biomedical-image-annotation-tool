@@ -18,12 +18,10 @@
   "homepage": "https://github.com/daangroot/biomedical-image-server#readme",
   "dependencies": {
     "axios": "~0.21.1",
-    "cors": "2.8.5",
-    "express": "^4.17.1",
-    "form-data": "~4.0.0",
-    "gdal": "^0.10.1",
-    "image-size": "^1.0.0",
-    "multer": "^1.4.2",
-    "sharp": "^0.28.1"
+    "cors": "~2.8.5",
+    "express": "~4.17.1",
+    "multer": "~1.4.2",
+    "probe-image-size": "~7.1.0",
+    "sharp": "~0.28.1"
   }
 }

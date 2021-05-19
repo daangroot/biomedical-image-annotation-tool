@@ -1,10 +1,8 @@
 const axios = require('axios').default
-const FormData = require('form-data')
 const fs = require('fs')
+const fsAsync = fs.promises
 const imageService = require('./image')
 const utils = require('./utils')
-
-const fsAsync = fs.promises
 
 const GDAL_SERVER_URL = process.env.GDAL_SERVER_URL || 'http://localhost:5000'
 

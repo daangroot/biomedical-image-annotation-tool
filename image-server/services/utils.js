@@ -1,5 +1,4 @@
 const fs = require('fs')
-
 const fsAsync = fs.promises
 
 async function pathExists(path) {
