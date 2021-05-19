@@ -12,5 +12,3 @@ services:
       - GDAL_SERVER_URL=http://gdal-server:5000
   gdal-server:
     build: ./gdal-server
-    ports:
-      - "5000:5000"
