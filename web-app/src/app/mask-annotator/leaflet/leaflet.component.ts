@@ -470,7 +470,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
-    this.featureLayers.get(fid)?.remove();
+    this.featuresLayer.removeLayer(this.featureLayers.get(fid)!);
     this.featuresLayer.addData(this.features.get(fid)!);
 
     if (openPopup) {
