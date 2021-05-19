@@ -1,6 +1,5 @@
 const fs = require('fs')
 const fsAsync = fs.promises
-const imageSize = require('image-size')
 const probe = require('probe-image-size')
 const sharp = require('sharp')
 
@@ -21,7 +20,7 @@ async function saveImageMetadata(metaData, targetPath) {
 
 async function createThumbnail(sourcePath, targetPath) {
 	const options = {}
-	const dimensions = imageSize(sourcePath)
+	const dimensions = await probe(fs.createReadStream(sourcePath))
 	if (dimensions.width > dimensions.height) {
 		options.width = 256
 	} else {
