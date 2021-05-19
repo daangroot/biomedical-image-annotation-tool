@@ -1,4 +1,4 @@
-import { Input, Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Input, Component, OnInit, AfterViewInit, ViewChild, HostListener } from '@angular/core';
 import * as L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import { Feature, Polygon, MultiPolygon } from 'geojson';
@@ -715,5 +715,13 @@ export class LeafletComponent implements OnInit, AfterViewInit {
         this.setUnsavedChanges(true);
       }
     } catch { }
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload($event: BeforeUnloadEvent) {
+    if (this.unsavedChanges) {
+      $event.preventDefault();
+      $event.returnValue = '';
+    }
   }
 }
