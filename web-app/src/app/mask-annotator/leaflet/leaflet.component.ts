@@ -459,6 +459,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       feature.properties.simplifyTolerance = 0;
     }
 
+    feature.properties.score ??= null;
+    feature.properties.grade ??= null;
+
     this.features.set(fid, feature);
     this.featureLayers.set(fid, layer);
 
