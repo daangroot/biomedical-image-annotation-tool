@@ -6,3 +6,11 @@
 #help-button {
   margin-left: auto;
 }
+
+.json-string {
+  color: green;
+}
+
+.json-note {
+  color: red;
+}
