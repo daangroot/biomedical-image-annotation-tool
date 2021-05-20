@@ -14,5 +14,3 @@ services:
       - ./data:/usr/src/app/images
   gdal-server:
     build: ./gdal-server
-    volumes:
-      - ./data:/usr/src/app/images
