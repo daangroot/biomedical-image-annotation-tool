@@ -10,5 +10,9 @@ services:
       - "8080:8080"
     environment:
       - GDAL_SERVER_URL=http://gdal-server:5000
+    volumes:
+      - ./data:/usr/src/app/images
   gdal-server:
     build: ./gdal-server
+    volumes:
+      - ./data:/usr/src/app/images
