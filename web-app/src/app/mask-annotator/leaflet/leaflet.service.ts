@@ -20,16 +20,10 @@ export class LeafletService {
     this.maxNativeZoom = maxNativeZoom;
   }
 
-  createMap(htmlId: string, canInteract: boolean = true): L.Map {
+  createMap(htmlId: string): L.Map {
     return L.map(htmlId, {
       crs: L.CRS.Simple,
-      zoomControl: false,
-      dragging: canInteract,
-      scrollWheelZoom: canInteract,
-      doubleClickZoom: canInteract,
-      touchZoom: canInteract,
-      boxZoom: canInteract,
-      keyboard: canInteract
+      zoomControl: false
     });
   }
 
