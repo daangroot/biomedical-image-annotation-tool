@@ -9,6 +9,7 @@ import { MaskExportComponent } from '../../mask-export/mask-export.component';
 import { ImageMetadata } from '../../types/image-metadata.type';
 import { MaskApiService } from '../../services/mask-api.service';
 import { AnnotationData } from '../../types/annotation-data.type';
+import { StatisticsComponent } from '../statistics/statistics.component';
 
 @Component({
   selector: 'app-leaflet',
@@ -20,6 +21,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   @Input() maskId!: string;
   @Input() imageMetadata!: ImageMetadata;
   @Input() maskMetadata!: ImageMetadata;
+  @ViewChild(StatisticsComponent) private statisticsComponent!: StatisticsComponent;
   @ViewChild(MaskExportComponent) private maskExportComponent!: MaskExportComponent;
   headerHeight!: number;
   showBaseMap: boolean = false;
@@ -43,6 +45,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private removeAllInnerRingsControl!: L.Control;
   private featureEditUndoControl!: L.Control;
   private setOverallScoreControl!: L.Control;
+  private showStatisticsControl!: L.Control;
   private saveFeaturesControl!: L.Control;
   private resetFeaturesControl!: L.Control;
   private exportControl!: L.Control;
@@ -187,6 +190,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
     this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
     this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveChanges());
+    this.showStatisticsControl = this.leafletService.createShowStatisticsControl(() => this.showStatistics());
     this.exportControl = this.leafletService.createExportControl(() => this.exportMask());
     this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetAnnotationData());
     this.unsavedChangesControl = this.leafletService.createUnsavedChangesControl().addTo(this.maskMap);
@@ -205,6 +209,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.simplifyAllPolygonsControl.remove();
     this.removeAllInnerRingsControl.remove();
     this.setOverallScoreControl.remove();
+    this.showStatisticsControl.remove();
     this.saveFeaturesControl.remove();
     this.exportControl.remove();
     this.resetFeaturesControl.remove();
@@ -230,6 +235,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.simplifyAllPolygonsControl.addTo(this.maskMap);
     this.removeAllInnerRingsControl.addTo(this.maskMap);
     this.setOverallScoreControl.addTo(this.maskMap);
+    this.showStatisticsControl.addTo(this.maskMap);
     this.saveFeaturesControl.addTo(this.maskMap);
     this.resetFeaturesControl.addTo(this.maskMap);
     this.exportControl.addTo(this.maskMap);
@@ -642,6 +648,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       },
       error => window.alert('Failed to reset segments and grades!')
     )
+  }
+
+  private showStatistics(): void {
+    const button = document.getElementById('show-statistics-button')!;
+    this.statisticsComponent.show(button, this.overallScore, this.features);
   }
 
   private exportMask(): void {
