@@ -1,5 +1,6 @@
 import { Input, Component, OnInit, AfterViewInit, ViewChild, HostListener } from '@angular/core';
 import * as L from 'leaflet';
+import 'leaflet.sync';
 import '@geoman-io/leaflet-geoman-free';
 import { Feature, Polygon, MultiPolygon } from 'geojson';
 import { environment } from '../../../environments/environment';
@@ -92,17 +93,26 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private initBaseMap(): void {
-    this.baseMap = this.leafletService.createMap('leaflet-viewer-base', false);
+    this.baseMap = this.leafletService.createMap('leaflet-viewer-base');
+    this.baseMap.setMaxBounds(L.latLngBounds(this.leafletService.toLatLng(this.swMax), this.leafletService.toLatLng(this.neMax)));
     this.addTileLayer(this.baseMap);
 
-    this.maskMap.on('move', () =>
-      this.baseMap.setView(this.maskMap.getCenter(), this.maskMap.getZoom())
-    )
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(this.baseMap);
+
+    // @ts-ignore
+    this.maskMap.sync(this.baseMap);
+    // @ts-ignore
+    this.baseMap.sync(this.maskMap);
   }
 
   private destroyBaseMap(): void {
+    // @ts-ignore
+    this.maskMap.unsync(this.baseMap);
+    // @ts-ignore
+    this.baseMap.unsync(this.maskMap);
     this.baseMap.remove();
-    this.maskMap.off('move');
   }
 
   toggleBaseMap(): void {
@@ -174,7 +184,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       position: 'bottomright'
     }).addTo(this.maskMap);
 
-    
     this.showTopLeftControlsControl = this.leafletService.createShowControlsControl(() => this.toggleTopLeftControls());
     this.hideTopLeftControlsControl = this.leafletService.createHideControlsControl(() => this.toggleTopLeftControls());
     this.splitScreenControl = this.leafletService.createSplitScreenControl(() => this.toggleBaseMap());
