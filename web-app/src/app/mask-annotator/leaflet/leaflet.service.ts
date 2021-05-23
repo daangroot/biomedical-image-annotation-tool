@@ -127,7 +127,7 @@ export class LeafletService {
     return [polygon[0]];
   }
 
-  private createButtonControl(button: HTMLElement, position: L.ControlPosition): L.Control {
+  createButtonControl(button: HTMLElement, position: L.ControlPosition): L.Control {
     const Control = L.Control.extend({
       onAdd(map: L.Map) {
         const container: HTMLElement = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
@@ -140,7 +140,22 @@ export class LeafletService {
     })
   }
 
-  private createButtonElement(title: string, image: string, onClick?: Function): HTMLElement {
+  createButtonsControl(buttons: HTMLElement[], position: L.ControlPosition): L.Control {
+    const Control = L.Control.extend({
+      onAdd(map: L.Map) {
+        const container: HTMLElement = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
+        for (const button of buttons) {
+          container.appendChild(button);
+        }
+        return container;
+      },
+    });
+    return new Control({
+      position: position
+    })
+  }
+
+  createButtonElement(title: string, image: string, onClick?: Function): HTMLElement {
     const button = L.DomUtil.create('a');
     button.setAttribute('role', 'button');
     button.title = title;
@@ -151,92 +166,6 @@ export class LeafletService {
     }
     L.DomEvent.disableClickPropagation(button);
     return button;
-  }
-
-  createShowControlsControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Show buttons', 'expand_more', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createHideControlsControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Hide buttons', 'expand_less', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createSplitScreenControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Split screen', 'swap_horiz', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createDrawFeatureControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Draw segment', 'polygon', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createCancelDrawFeatureControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Cancel segment drawing', 'close', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createCutFeatureControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Cut segment', 'cut', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createCancelCutFeatureControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Cancel segment cutting', 'close', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createMultiSelectControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Select multiple segments', 'multi_select', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createCancelMultiSelectControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Cancel selecting multiple segments', 'close', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createSimplifyAllFeaturesControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Simplify all segments', 'simplify', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createRemoveAllInnerRingsControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Remove all holes', 'delete_inner_rings', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createFeatureEditUndoControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Undo last operation', 'undo', onClick);
-    return this.createButtonControl(button, 'topright');
-  }
-
-  createSetOverallScoreControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Rate overall accuracy', 'grade', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createShowStatisticsControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Show statistics', 'statistics', onClick);
-    button.id = 'show-statistics-button';
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createSaveFeaturesControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Save segments and grades', 'save', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createResetFeaturesControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Reset segments and grades', 'restore', onClick);
-    return this.createButtonControl(button, 'topleft');
-  }
-
-  createExportControl(onClick: Function): L.Control {
-    const button = this.createButtonElement('Export segmentation mask', 'export', onClick);
-    return this.createButtonControl(button, 'topleft');
   }
 
   createUnsavedChangesControl(): L.Control {

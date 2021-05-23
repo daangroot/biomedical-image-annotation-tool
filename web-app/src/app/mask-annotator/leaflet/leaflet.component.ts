@@ -35,25 +35,17 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private maxNativeZoom!: number;
   private featuresLayer!: L.GeoJSON;
 
-  private showTopLeftControlsControl!: L.Control;
-  private hideTopLeftControlsControl!: L.Control;
+  private toggleTopLeftControlsButton!: HTMLElement;
+  private drawFeatureButton!: HTMLElement;
+  private cutFeatureButton!: HTMLElement;
+  private multiSelectButton!: HTMLElement;
+  private editFeatureControl!: L.Control;
   private splitScreenControl!: L.Control;
-  private drawFeatureControl!: L.Control;
-  private cancelDrawFeatureControl!: L.Control;
-  private cutFeatureControl!: L.Control;
-  private cancelCutFeatureControl!: L.Control
-  private multiSelectControl!: L.Control;
-  private cancelMultiSelectControl!: L.Control;
-  private simplifyAllPolygonsControl!: L.Control;
-  private removeAllInnerRingsControl!: L.Control;
-  private featureEditUndoControl!: L.Control;
-  private setOverallScoreControl!: L.Control;
-  private showStatisticsControl!: L.Control;
-  private saveFeaturesControl!: L.Control;
-  private resetFeaturesControl!: L.Control;
-  private exportControl!: L.Control;
+  private gradeControl!: L.Control;
+  private saveExportControl!: L.Control;
   private unsavedChangesControl!: L.Control;
-
+  private featureEditUndoControl!: L.Control;
+  
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
@@ -158,16 +150,16 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.maskMap.on('pm:create', (result) => {
       this.createFeature(result.layer);
-      this.disableDrawMode();
+      this.toggleDrawMode(false);
     });
 
     this.maskMap.on('pm:cut', (result) => {
       // @ts-ignore
       this.cutFeature(result.layer.feature, result.originalLayer.feature);
-      this.disableCutMode();
+      this.toggleCutMode(false);
     });
 
-    this.initControls();
+    this.initMaskMapControls();
   }
 
   private fitContainer(): void {
@@ -185,163 +177,107 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }).addTo(map);
   }
 
-  private initControls(): void {
+  private initMaskMapControls(): void {
     L.control.zoom({
       position: 'bottomright'
     }).addTo(this.maskMap);
 
-    this.showTopLeftControlsControl = this.leafletService.createShowControlsControl(() => this.toggleTopLeftControls());
-    this.hideTopLeftControlsControl = this.leafletService.createHideControlsControl(() => this.toggleTopLeftControls());
-    this.splitScreenControl = this.leafletService.createSplitScreenControl(() => this.toggleBaseMap());
-    this.drawFeatureControl = this.leafletService.createDrawFeatureControl(() => this.enableDrawMode());
-    this.cancelDrawFeatureControl = this.leafletService.createCancelDrawFeatureControl(() => this.disableDrawMode());
-    this.cutFeatureControl = this.leafletService.createCutFeatureControl(() => this.enableCutMode());
-    this.cancelCutFeatureControl = this.leafletService.createCancelCutFeatureControl(() => this.disableCutMode());
-    this.multiSelectControl = this.leafletService.createMultiSelectControl(() => this.enableMultiSelectMode());
-    this.cancelMultiSelectControl = this.leafletService.createCancelMultiSelectControl(() => this.disableMultiSelectMode());
-    this.simplifyAllPolygonsControl = this.leafletService.createSimplifyAllFeaturesControl(() => this.simplifyAllFeatures());
-    this.removeAllInnerRingsControl = this.leafletService.createRemoveAllInnerRingsControl(() => this.removeAllInnerRings());
-    this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
-    this.setOverallScoreControl = this.leafletService.createSetOverallScoreControl(() => this.setOverallScore());
-    this.saveFeaturesControl = this.leafletService.createSaveFeaturesControl(() => this.saveChanges());
-    this.showStatisticsControl = this.leafletService.createShowStatisticsControl(() => this.showStatistics());
-    this.exportControl = this.leafletService.createExportControl(() => this.exportMask());
-    this.resetFeaturesControl = this.leafletService.createResetFeaturesControl(() => this.resetAnnotationData());
+    this.toggleTopLeftControlsButton = this.leafletService.createButtonElement('Hide buttons', 'expand_less', () => this.toggleTopLeftControls());
+    this.leafletService.createButtonControl(this.toggleTopLeftControlsButton, 'topleft').addTo(this.maskMap);
+
+    const splitScreenButton = this.leafletService.createButtonElement('Split screen', 'swap_horiz', () => this.toggleBaseMap());
+    this.splitScreenControl = this.leafletService.createButtonControl(splitScreenButton, 'topleft').addTo(this.maskMap);
+
+    this.drawFeatureButton = this.leafletService.createButtonElement('Draw segment', 'polygon', () => this.toggleDrawMode());
+    this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
+    this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'multi_select', () => this.toggleMultiSelectMode());
+    const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () => this.simplifyAllFeatures());
+    const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () => this.removeAllHoles());
+    const editButtons = [this.drawFeatureButton, this.cutFeatureButton, this.multiSelectButton, simplifyAllFeaturesButton, removeAllHolesButton];
+    this.editFeatureControl = this.leafletService.createButtonsControl(editButtons, 'topleft').addTo(this.maskMap);
+
+    const overallScoreButton = this.leafletService.createButtonElement('Rate overall accuracy', 'grade', () => this.setOverallScore());
+    const statisticsButton = this.leafletService.createButtonElement('Show statistics', 'statistics', () => this.showStatistics());
+    const gradeButtons = [overallScoreButton, statisticsButton];
+    this.gradeControl = this.leafletService.createButtonsControl(gradeButtons, 'topleft').addTo(this.maskMap);
+
+    const saveButton = this.leafletService.createButtonElement('Save segments and grades', 'save', () => this.saveChanges());
+    const resetFeaturesButton = this.leafletService.createButtonElement('Reset segments and grades', 'restore', () => this.resetAnnotationData());
+    const exportButton = this.leafletService.createButtonElement('Export segmentation mask', 'export', () => this.exportMask());
+    const saveExportButtons = [saveButton, resetFeaturesButton, exportButton];
+    this.saveExportControl = this.leafletService.createButtonsControl(saveExportButtons, 'topleft').addTo(this.maskMap);
+    
     this.unsavedChangesControl = this.leafletService.createUnsavedChangesControl().addTo(this.maskMap);
 
-    this.updateTopLeftControls();
-  }
-
-  private updateTopLeftControls(): void {
-    this.showTopLeftControlsControl.remove();
-    this.hideTopLeftControlsControl.remove();
-    this.splitScreenControl.remove();
-    this.drawFeatureControl.remove();
-    this.cancelDrawFeatureControl.remove();
-    this.cutFeatureControl.remove();
-    this.cancelCutFeatureControl.remove();
-    this.multiSelectControl.remove();
-    this.cancelMultiSelectControl.remove();
-    this.simplifyAllPolygonsControl.remove();
-    this.removeAllInnerRingsControl.remove();
-    this.setOverallScoreControl.remove();
-    this.showStatisticsControl.remove();
-    this.saveFeaturesControl.remove();
-    this.exportControl.remove();
-    this.resetFeaturesControl.remove();
-
-    if (!this.showTopLeftControls) {
-      this.showTopLeftControlsControl.addTo(this.maskMap);
-      return;
-    }
-
-    this.hideTopLeftControlsControl.addTo(this.maskMap);
-    this.splitScreenControl.addTo(this.maskMap);
-
-    this.drawFeatureControl.addTo(this.maskMap);
-    const drawFeatureButton = this.drawFeatureControl.getContainer()?.firstElementChild!;
-    drawFeatureButton.classList.toggle('active', this.drawModeEnabled);
-    if (this.drawModeEnabled) {
-      this.cancelDrawFeatureControl.addTo(this.maskMap);
-      const cancelDrawFeatureButton = this.cancelDrawFeatureControl.getContainer()?.firstElementChild!;
-      cancelDrawFeatureButton.classList.add('active');
-    }
-
-    this.cutFeatureControl.addTo(this.maskMap);
-    const cutFeatureButton = this.cutFeatureControl.getContainer()?.firstElementChild!;
-    cutFeatureButton.classList.toggle('active', this.cutModeEnabled);
-    if (this.cutModeEnabled) {
-      this.cancelCutFeatureControl.addTo(this.maskMap);
-      const cancelCutFeatureButton = this.cancelCutFeatureControl.getContainer()?.firstElementChild!;
-      cancelCutFeatureButton.classList.add('active');
-    }
-
-    this.multiSelectControl.addTo(this.maskMap);
-    if (this.multiSelectModeEnabled) {
-      this.cancelMultiSelectControl.addTo(this.maskMap);
-    }
-
-    this.simplifyAllPolygonsControl.addTo(this.maskMap);
-    this.removeAllInnerRingsControl.addTo(this.maskMap);
-    this.setOverallScoreControl.addTo(this.maskMap);
-    this.showStatisticsControl.addTo(this.maskMap);
-    this.saveFeaturesControl.addTo(this.maskMap);
-    this.resetFeaturesControl.addTo(this.maskMap);
-    this.exportControl.addTo(this.maskMap);
+    const undoButton = this.leafletService.createButtonElement('Undo last operation', 'undo', () => this.undoFeatureEdit());
+    this.featureEditUndoControl = this.leafletService.createButtonControl(undoButton, 'topright');
   }
 
   private toggleTopLeftControls() {
     this.showTopLeftControls = !this.showTopLeftControls;
-    this.updateTopLeftControls();
+
+    this.toggleTopLeftControlsButton.title = this.showTopLeftControls ? 'Hide buttons' : 'Show buttons';
+    this.toggleTopLeftControlsButton.style.backgroundImage = this.showTopLeftControls ? 'url("/assets/expand_less.png")' : 'url("/assets/expand_more.png")';
+
+    if (this.showTopLeftControls) {
+      this.splitScreenControl.addTo(this.maskMap);
+      this.editFeatureControl.addTo(this.maskMap);
+      this.gradeControl.addTo(this.maskMap);
+      this.saveExportControl.addTo(this.maskMap);
+    } else {
+      this.splitScreenControl.remove();
+      this.editFeatureControl.remove();
+      this.gradeControl.remove();
+      this.saveExportControl.remove();
+    }
   }
 
-  private enableDrawMode(): void {
+  private toggleDrawMode(force?: boolean | undefined): void {
+    this.drawModeEnabled = force !== undefined ? force : !this.drawModeEnabled;
+    if (this.drawModeEnabled && this.cutModeEnabled) {
+      this.toggleCutMode(false);
+    }
+
+    this.drawFeatureButton.title = this.drawModeEnabled ? 'Cancel segment drawing' : 'Draw segment';
+    this.drawFeatureButton.classList.toggle('active', this.drawModeEnabled);
+
     if (this.drawModeEnabled) {
-      return;
-    }
-    if (this.cutModeEnabled) {
-      this.disableCutMode();
-    }
-    this.drawModeEnabled = true;
-    this.updateTopLeftControls();
-
-    this.maskMap.pm.enableDraw('Polygon', {
+      this.maskMap.pm.enableDraw('Polygon', {
+        // @ts-ignore
+        allowSelfIntersection: false,
+        tooltips: false
+      });
+    } else {
       // @ts-ignore
-      allowSelfIntersection: false,
-      tooltips: false
-    });
-  }
-
-  private disableDrawMode(): void {
-    if (!this.drawModeEnabled) {
-      return;
+      this.maskMap.pm.disableDraw();
     }
-    this.drawModeEnabled = false;
-    this.updateTopLeftControls();
-    // @ts-ignore
-    this.maskMap.pm.disableDraw();
   }
 
-  private enableCutMode(): void {
+  private toggleCutMode(force?: boolean | undefined): void {
+    this.cutModeEnabled = force !== undefined ? force : !this.cutModeEnabled;
+    if (this.cutModeEnabled && this.drawModeEnabled) {
+      this.toggleDrawMode(false);
+    }
+
+    this.cutFeatureButton.title = this.cutModeEnabled ? 'Cancel segment cutting' : 'Cut segment';
+    this.cutFeatureButton.classList.toggle('active', this.cutModeEnabled);
+
     if (this.cutModeEnabled) {
-      return;
+      this.maskMap.pm.enableGlobalCutMode({
+        // @ts-ignore
+        allowSelfIntersection: false,
+        tooltips: false
+      });
+    } else {
+      this.maskMap.pm.disableGlobalCutMode();
     }
-    if (this.drawModeEnabled) {
-      this.disableDrawMode();
-    }
-    this.cutModeEnabled = true;
-    this.updateTopLeftControls();
-
-    this.maskMap.pm.enableGlobalCutMode({
-      // @ts-ignore
-      allowSelfIntersection: false,
-      tooltips: false
-    });
   }
 
-  private disableCutMode(): void {
-    if (!this.cutModeEnabled) {
-      return;
-    }
-    this.cutModeEnabled = false;
-    this.updateTopLeftControls();
-    this.maskMap.pm.disableGlobalCutMode();
-  }
+  private toggleMultiSelectMode(force?: boolean | undefined): void {
+    this.multiSelectModeEnabled = force !== undefined ? force : !this.multiSelectModeEnabled;
 
-  private enableMultiSelectMode(): void {
-    if (this.multiSelectModeEnabled) {
-      return;
-    }
-    this.multiSelectModeEnabled = true;
-    this.updateTopLeftControls();
-  }
-
-  private disableMultiSelectMode(): void {
-    if (!this.multiSelectModeEnabled) {
-      return;
-    }
-    this.multiSelectModeEnabled = false;
-    this.updateTopLeftControls();
+    this.multiSelectButton.title = this.multiSelectModeEnabled ? 'Cancel selecting segments' : 'Select segments';
+    this.multiSelectButton.classList.toggle('active', this.multiSelectModeEnabled);
   }
 
   private createFeaturePopup(fid: number): HTMLElement {
@@ -401,7 +337,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       deleteInnerButton.innerHTML = innerRingCount === 1 ? 'Remove hole' : 'Remove holes';
       deleteInnerButton.onclick = () => {
         this.addToFeatureEditUndoStack([feature]);
-        this.removeInnerRings(fid, true);
+        this.removeHoles(fid, true);
       };
     }
 
@@ -635,23 +571,23 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.addToFeatureEditUndoStack(simplifiedFeatures);
   }
 
-  private removeInnerRings(fid: number, openPopup: boolean = false) {
+  private removeHoles(fid: number, openPopup: boolean = false) {
     const feature = this.features.get(fid)!
     feature.geometry.coordinates = this.leafletService.removeInnerRings(feature.geometry.coordinates as L.PointTuple[][]);
     this.updateFeatureLayer(fid, openPopup);
   }
 
-  private removeAllInnerRings(): void {
-    const featuresWithInnerRing: Feature<Polygon, any>[] = [];
+  private removeAllHoles(): void {
+    const featuresWithHole: Feature<Polygon, any>[] = [];
 
     for (const feature of this.features.values()) {
       if (feature.geometry.coordinates.length > 1) {
-        featuresWithInnerRing.push(JSON.parse(JSON.stringify(feature)));
-        this.removeInnerRings(feature.properties.fid);
+        featuresWithHole.push(JSON.parse(JSON.stringify(feature)));
+        this.removeHoles(feature.properties.fid);
       }
     }
 
-    this.addToFeatureEditUndoStack(featuresWithInnerRing);
+    this.addToFeatureEditUndoStack(featuresWithHole);
   }
 
   private removeFeature(fid: number) {
