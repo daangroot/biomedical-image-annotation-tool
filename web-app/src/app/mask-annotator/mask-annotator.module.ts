@@ -4,11 +4,13 @@ import { MaskAnnotatorComponent } from './mask-annotator/mask-annotator.componen
 import { MaskAnnotatorRoutingModule } from './mask-annotator-routing.module';
 import { LeafletComponent } from './leaflet/leaflet.component';
 import { MaskExportModule } from '../mask-export/mask-export.module';
+import { StatisticsComponent } from './statistics/statistics.component';
 
 @NgModule({
   declarations: [
     MaskAnnotatorComponent,
-    LeafletComponent
+    LeafletComponent,
+    StatisticsComponent
   ],
   imports: [
     CommonModule,

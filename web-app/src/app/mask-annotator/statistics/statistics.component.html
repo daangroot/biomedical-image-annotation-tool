@@ -1,0 +1,54 @@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="statistics-offcanvas" aria-labelledby="statistics-offcanvas-label">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="statistics-offcanvas-label">Statistics</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <ul class="list-group mb-3" *ngIf="overallScore != null || averageScore != null">
+      <ul class="list-group-item" *ngIf="overallScore != null">
+        <strong>Overall score:</strong> {{ overallScore }}%
+      </ul>
+      <ul class="list-group-item" *ngIf="averageScore != null">
+        <strong>Average segment score:</strong> {{ averageScore | number:'1.0-2' }}%
+      </ul>
+    </ul>
+    <table class="table">
+      <thead>
+        <tr>
+          <th></th>
+          <th scope="col">#</th>
+          <th scope="col">% of total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: green">True positive</td>
+          <td>{{ truePositiveCount }}</td>
+          <td>{{ countPercentage(truePositiveCount) | number:'1.0-2' }}%</td>
+        </tr>
+        <tr>
+          <td style="color: red">False positive</td>
+          <td>{{ falsePositiveCount }}</td>
+          <td>{{ countPercentage(falsePositiveCount) | number:'1.0-2' }}%</td>
+        </tr>
+        <tr>
+          <td style="color: orange">False negative</td>
+          <td>{{ falseNegativeCount }}</td>
+          <td>{{ countPercentage(falseNegativeCount) | number:'1.0-2' }}%</td>
+        </tr>
+        <tr>
+          <td>Unspecified</td>
+          <td>{{ unspecifiedCount }}</td>
+          <td>{{ countPercentage(unspecifiedCount) | number:'1.0-2' }}%</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td scope="row">Total</td>
+          <td>{{ totalCount }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>

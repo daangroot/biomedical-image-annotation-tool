@@ -218,6 +218,12 @@ export class LeafletService {
     return this.createButtonControl(button, 'topleft');
   }
 
+  createShowStatisticsControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Show statistics', 'statistics', onClick);
+    button.id = 'show-statistics-button';
+    return this.createButtonControl(button, 'topleft');
+  }
+
   createSaveFeaturesControl(onClick: Function): L.Control {
     const button = this.createButtonElement('Save segments and grades', 'save', onClick);
     return this.createButtonControl(button, 'topleft');
