@@ -239,13 +239,21 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.splitScreenControl.addTo(this.maskMap);
 
     this.drawFeatureControl.addTo(this.maskMap);
+    const drawFeatureButton = this.drawFeatureControl.getContainer()?.firstElementChild!;
+    drawFeatureButton.classList.toggle('active', this.drawModeEnabled);
     if (this.drawModeEnabled) {
       this.cancelDrawFeatureControl.addTo(this.maskMap);
+      const cancelDrawFeatureButton = this.cancelDrawFeatureControl.getContainer()?.firstElementChild!;
+      cancelDrawFeatureButton.classList.add('active');
     }
 
     this.cutFeatureControl.addTo(this.maskMap);
+    const cutFeatureButton = this.cutFeatureControl.getContainer()?.firstElementChild!;
+    cutFeatureButton.classList.toggle('active', this.cutModeEnabled);
     if (this.cutModeEnabled) {
       this.cancelCutFeatureControl.addTo(this.maskMap);
+      const cancelCutFeatureButton = this.cancelCutFeatureControl.getContainer()?.firstElementChild!;
+      cancelCutFeatureButton.classList.add('active');
     }
 
     this.multiSelectControl.addTo(this.maskMap);

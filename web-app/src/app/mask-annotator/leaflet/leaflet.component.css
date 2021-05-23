@@ -22,3 +22,7 @@
 #leaflet-viewer-base.basemap-visible {
   display: block;
 }
+
+:host::ng-deep .leaflet-control a.active {
+  background-color: yellow;
+}
