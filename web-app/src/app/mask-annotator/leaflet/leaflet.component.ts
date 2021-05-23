@@ -40,6 +40,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private cancelDrawFeatureControl!: L.Control;
   private cutFeatureControl!: L.Control;
   private cancelCutFeatureControl!: L.Control
+  private multiSelectControl!: L.Control;
+  private cancelMultiSelectControl!: L.Control;
   private simplifyAllPolygonsControl!: L.Control;
   private removeAllInnerRingsControl!: L.Control;
   private featureEditUndoControl!: L.Control;
@@ -52,6 +54,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
+  private multiSelectModeEnabled: boolean = false;
   private maxFid: number = -1;
   private features: Map<number, Feature<Polygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
@@ -191,6 +194,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.cancelDrawFeatureControl = this.leafletService.createCancelDrawFeatureControl(() => this.disableDrawMode());
     this.cutFeatureControl = this.leafletService.createCutFeatureControl(() => this.enableCutMode());
     this.cancelCutFeatureControl = this.leafletService.createCancelCutFeatureControl(() => this.disableCutMode());
+    this.multiSelectControl = this.leafletService.createMultiSelectControl(() => this.enableMultiSelectMode());
+    this.cancelMultiSelectControl = this.leafletService.createCancelMultiSelectControl(() => this.disableMultiSelectMode());
     this.simplifyAllPolygonsControl = this.leafletService.createSimplifyAllFeaturesControl(() => this.simplifyAllFeatures());
     this.removeAllInnerRingsControl = this.leafletService.createRemoveAllInnerRingsControl(() => this.removeAllInnerRings());
     this.featureEditUndoControl = this.leafletService.createFeatureEditUndoControl(() => this.undoFeatureEdit());
@@ -211,6 +216,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.cancelDrawFeatureControl.remove();
     this.cutFeatureControl.remove();
     this.cancelCutFeatureControl.remove();
+    this.multiSelectControl.remove();
+    this.cancelMultiSelectControl.remove();
     this.simplifyAllPolygonsControl.remove();
     this.removeAllInnerRingsControl.remove();
     this.setOverallScoreControl.remove();
@@ -234,6 +241,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.cutFeatureControl.addTo(this.maskMap);
     if (this.cutModeEnabled) {
       this.cancelCutFeatureControl.addTo(this.maskMap);
+    }
+
+    this.multiSelectControl.addTo(this.maskMap);
+    if (this.multiSelectModeEnabled) {
+      this.cancelMultiSelectControl.addTo(this.maskMap);
     }
 
     this.simplifyAllPolygonsControl.addTo(this.maskMap);
@@ -300,6 +312,22 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.cutModeEnabled = false;
     this.updateTopLeftControls();
     this.maskMap.pm.disableGlobalCutMode();
+  }
+
+  private enableMultiSelectMode(): void {
+    if (this.multiSelectModeEnabled) {
+      return;
+    }
+    this.multiSelectModeEnabled = true;
+    this.updateTopLeftControls();
+  }
+
+  private disableMultiSelectMode(): void {
+    if (!this.multiSelectModeEnabled) {
+      return;
+    }
+    this.multiSelectModeEnabled = false;
+    this.updateTopLeftControls();
   }
 
   private createFeaturePopup(fid: number): HTMLElement {

@@ -188,6 +188,16 @@ export class LeafletService {
     return this.createButtonControl(button, 'topleft');
   }
 
+  createMultiSelectControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Select multiple segments', 'multi_select', onClick);
+    return this.createButtonControl(button, 'topleft');
+  }
+
+  createCancelMultiSelectControl(onClick: Function): L.Control {
+    const button = this.createButtonElement('Cancel selecting multiple segments', 'close', onClick);
+    return this.createButtonControl(button, 'topleft');
+  }
+
   createSimplifyAllFeaturesControl(onClick: Function): L.Control {
     const button = this.createButtonElement('Simplify all segments', 'simplify', onClick);
     return this.createButtonControl(button, 'topleft');
