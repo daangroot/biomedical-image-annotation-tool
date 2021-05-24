@@ -37,6 +37,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private toggleTopLeftControlsButton!: HTMLElement;
   private drawFeatureButton!: HTMLElement;
+  private removeLastVertexButton!: HTMLElement;
   private cutFeatureButton!: HTMLElement;
   private multiSelectButton!: HTMLElement;
   private editFeatureControl!: L.Control;
@@ -50,6 +51,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
   private multiSelectModeEnabled: boolean = false;
+  private drawnVertexCount: number = 0;
   private maxFid: number = -1;
   private features: Map<number, Feature<Polygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
@@ -148,13 +150,18 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       snapIgnore: true
     }).addTo(this.maskMap);
 
+    this.maskMap.on('pm:drawstart', ({ workingLayer }: any) =>
+      workingLayer.on('pm:vertexadded', (e: any) =>
+        this.onVertexDrawn()
+      )
+    );
+
     this.maskMap.on('pm:create', (result) => {
       this.createFeature(result.layer);
       this.toggleDrawMode(false);
     });
 
-    this.maskMap.on('pm:cut', (result) => {
-      // @ts-ignore
+    this.maskMap.on('pm:cut', (result: any) => {
       this.cutFeature(result.layer.feature, result.originalLayer.feature);
       this.toggleCutMode(false);
     });
@@ -189,11 +196,13 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.splitScreenControl = this.leafletService.createButtonControl(splitScreenButton, 'topleft').addTo(this.maskMap);
 
     this.drawFeatureButton = this.leafletService.createButtonElement('Draw segment', 'polygon', () => this.toggleDrawMode());
+    this.removeLastVertexButton = this.leafletService.createButtonElement('Remove last vertex', 'undo', () => this.removeLastVertex());
+    this.removeLastVertexButton.hidden = true;
     this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
     this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'multi_select', () => this.toggleMultiSelectMode());
     const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () => this.simplifyAllFeatures());
     const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () => this.removeAllHoles());
-    const editButtons = [this.drawFeatureButton, this.cutFeatureButton, this.multiSelectButton, simplifyAllFeaturesButton, removeAllHolesButton];
+    const editButtons = [this.drawFeatureButton, this.removeLastVertexButton, this.cutFeatureButton, this.multiSelectButton, simplifyAllFeaturesButton, removeAllHolesButton];
     this.editFeatureControl = this.leafletService.createButtonsControl(editButtons, 'topleft').addTo(this.maskMap);
 
     const overallScoreButton = this.leafletService.createButtonElement('Rate overall accuracy', 'grade', () => this.setOverallScore());
@@ -250,6 +259,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     } else {
       // @ts-ignore
       this.maskMap.pm.disableDraw();
+      this.drawnVertexCount = 0;
+      this.removeLastVertexButton.hidden = true;
     }
   }
 
@@ -494,6 +505,22 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const prevFeature = JSON.parse(JSON.stringify(feature));
     prevFeature.geometry = null;
     this.addToFeatureEditUndoStack([prevFeature]);
+  }
+
+  private onVertexDrawn(): void {
+    this.drawnVertexCount++;
+    if (this.drawnVertexCount > 0) {
+      this.removeLastVertexButton.hidden = false;
+    }
+  }
+
+  private removeLastVertex(): void {
+    // @ts-ignore
+    this.maskMap.pm.Draw.Polygon._removeLastVertex();
+    this.drawnVertexCount--;
+    if (this.drawnVertexCount == 0) {
+      this.toggleDrawMode(false);
+    }
   }
 
   private editFeature(fid: number, layer: L.Layer): void {

@@ -155,7 +155,7 @@ export class LeafletService {
     })
   }
 
-  createButtonElement(title: string, image: string, onClick?: Function): HTMLElement {
+  createButtonElement(title: string, image: string, onClick: Function): HTMLElement {
     const button = L.DomUtil.create('a');
     button.setAttribute('role', 'button');
     button.title = title;
