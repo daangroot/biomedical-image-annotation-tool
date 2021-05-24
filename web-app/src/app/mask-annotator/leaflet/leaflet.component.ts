@@ -197,6 +197,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.drawFeatureButton = this.leafletService.createButtonElement('Draw segment', 'polygon', () => this.toggleDrawMode());
     this.removeLastVertexButton = this.leafletService.createButtonElement('Remove last vertex', 'undo', () => this.removeLastVertex());
+    this.removeLastVertexButton.style.backgroundColor = '#3388ff';
     this.removeLastVertexButton.hidden = true;
     this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
     this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'multi_select', () => this.toggleMultiSelectMode());
