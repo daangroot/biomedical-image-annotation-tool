@@ -210,14 +210,25 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeLastVertexButton.style.backgroundColor = '#3388ff';
     this.removeLastVertexButton.hidden = true;
     this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
+
     const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () => this.simplifyFeatures(Array.from(this.features.values())));
-    const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () => this.removeAllHoles());
+    const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () => this.removeHolesInFeatures(Array.from(this.features.values())));
+
     this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'hand_cursor', () => this.toggleMultiSelectMode());
-    this.simplifySelectedFeaturesButton = this.leafletService.createButtonElement('Simplify selected segments', 'simplify', () =>
-      this.simplifyFeatures(Array.from(this.features.values()).filter(feature => this.selectedFids.has(feature.properties.fid)))
-    );
+    this.simplifySelectedFeaturesButton = this.leafletService.createButtonElement('Simplify selected segments', 'simplify', () => {
+      const selectedFeatures = Array.from(this.features.values()).filter(feature => this.selectedFids.has(feature.properties.fid));
+      this.simplifyFeatures(selectedFeatures);
+    });
     this.simplifySelectedFeaturesButton.style.backgroundColor = '#3388ff';
     this.simplifySelectedFeaturesButton.hidden = true;
+
+    this.removeHolesInSelectedFeaturesButton = this.leafletService.createButtonElement('Remove holes in selected segments', 'delete_inner_rings', () => {
+      const selectedFeatures = Array.from(this.features.values()).filter(feature => this.selectedFids.has(feature.properties.fid));
+      this.removeHolesInFeatures(selectedFeatures);
+    });
+    this.removeHolesInSelectedFeaturesButton.style.backgroundColor = '#3388ff';
+    this.removeHolesInSelectedFeaturesButton.hidden = true;
+
     const editButtons = [
       this.drawFeatureButton,
       this.removeLastVertexButton,
@@ -225,7 +236,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       simplifyAllFeaturesButton,
       removeAllHolesButton,
       this.multiSelectButton,
-      this.simplifySelectedFeaturesButton
+      this.simplifySelectedFeaturesButton,
+      this.removeHolesInSelectedFeaturesButton
     ];
     this.editFeatureControl = this.leafletService.createButtonsControl(editButtons, 'topleft').addTo(this.maskMap);
 
@@ -322,6 +334,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.multiSelectButton.title = this.multiSelectModeEnabled ? 'Cancel selecting segments' : 'Select segments';
     this.multiSelectButton.classList.toggle('active', this.multiSelectModeEnabled);
     this.simplifySelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
+    this.removeHolesInSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
 
     if (!this.multiSelectModeEnabled) {
       this.selectedFids.forEach(fid => {
@@ -673,10 +686,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.updateFeatureLayer(fid, openPopup);
   }
 
-  private removeAllHoles(): void {
+  private removeHolesInFeatures(features: Feature<Polygon, any>[]): void {
     const featuresWithHole: Feature<Polygon, any>[] = [];
 
-    for (const feature of this.features.values()) {
+    for (const feature of features) {
       if (feature.geometry.coordinates.length > 1) {
         featuresWithHole.push(JSON.parse(JSON.stringify(feature)));
         this.removeHoles(feature.properties.fid);
