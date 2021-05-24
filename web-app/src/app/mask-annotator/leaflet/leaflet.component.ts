@@ -40,6 +40,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private removeLastVertexButton!: HTMLElement;
   private cutFeatureButton!: HTMLElement;
   private multiSelectButton!: HTMLElement;
+  private simplifySelectedFeaturesButton!: HTMLElement;
+  private removeHolesInSelectedFeaturesButton!: HTMLElement;
+  private removeSelectedFeaturesButton!: HTMLElement;
   private editFeatureControl!: L.Control;
   private splitScreenControl!: L.Control;
   private gradeControl!: L.Control;
@@ -207,10 +210,23 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeLastVertexButton.style.backgroundColor = '#3388ff';
     this.removeLastVertexButton.hidden = true;
     this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
-    const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () => this.simplifyAllFeatures());
+    const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () => this.simplifyFeatures(Array.from(this.features.values())));
     const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () => this.removeAllHoles());
     this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'hand_cursor', () => this.toggleMultiSelectMode());
-    const editButtons = [this.drawFeatureButton, this.removeLastVertexButton, this.cutFeatureButton, simplifyAllFeaturesButton, removeAllHolesButton, this.multiSelectButton];
+    this.simplifySelectedFeaturesButton = this.leafletService.createButtonElement('Simplify selected segments', 'simplify', () =>
+      this.simplifyFeatures(Array.from(this.features.values()).filter(feature => this.selectedFids.has(feature.properties.fid)))
+    );
+    this.simplifySelectedFeaturesButton.style.backgroundColor = '#3388ff';
+    this.simplifySelectedFeaturesButton.hidden = true;
+    const editButtons = [
+      this.drawFeatureButton,
+      this.removeLastVertexButton,
+      this.cutFeatureButton,
+      simplifyAllFeaturesButton,
+      removeAllHolesButton,
+      this.multiSelectButton,
+      this.simplifySelectedFeaturesButton
+    ];
     this.editFeatureControl = this.leafletService.createButtonsControl(editButtons, 'topleft').addTo(this.maskMap);
 
     const overallScoreButton = this.leafletService.createButtonElement('Rate overall accuracy', 'grade', () => this.setOverallScore());
@@ -272,7 +288,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       // Reset on click listener, because for some reason Geoman changes it.
       this.features.forEach((_feature, fid) =>
         this.setOnFeatureClickListener(fid)
-      )
+      );
     }
   }
 
@@ -296,7 +312,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       // Reset on click listener, because for some reason Geoman changes it.
       this.features.forEach((_feature, fid) =>
         this.setOnFeatureClickListener(fid)
-      )
+      );
     }
   }
 
@@ -305,13 +321,14 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.multiSelectButton.title = this.multiSelectModeEnabled ? 'Cancel selecting segments' : 'Select segments';
     this.multiSelectButton.classList.toggle('active', this.multiSelectModeEnabled);
+    this.simplifySelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
 
     if (!this.multiSelectModeEnabled) {
       this.selectedFids.forEach(fid => {
+        this.selectedFids.delete(fid);
         const layer = this.featureLayers.get(fid)!;
         this.featuresLayer.resetStyle(layer);
       });
-      this.selectedFids.clear();
     }
   }
 
@@ -453,6 +470,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       return {};
     }
 
+    if (this.selectedFids.has(feature.properties.fid)) {
+      return { color: 'yellow' };
+    }
+
     switch (feature.properties.grade) {
       case FeatureGrade.TruePositive:  return { color: 'green' };
       case FeatureGrade.FalsePositive: return { color: 'red' };
@@ -506,15 +527,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       }
 
       if (this.selectedFids.has(fid)) {
-        this.featuresLayer.resetStyle(layer);
         this.selectedFids.delete(fid);
       } else {
-        // @ts-ignore
-        layer.setStyle({
-          color: 'yellow'
-        });
         this.selectedFids.add(fid);
       }
+      this.featuresLayer.resetStyle(layer);
     });
   }
 
@@ -636,10 +653,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     return isSimplified;
   }
 
-  private simplifyAllFeatures(): void {
+  private simplifyFeatures(features: Feature<Polygon, any>[]): void {
     const simplifiedFeatures: Feature<Polygon, any>[] = [];
 
-    for (const feature of this.features.values()) {
+    for (const feature of features) {
       const copy = JSON.parse(JSON.stringify(feature));
       const isSimplified = this.simplifyFeature(feature.properties.fid);
       if (isSimplified) {
