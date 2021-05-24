@@ -49,7 +49,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private saveExportControl!: L.Control;
   private unsavedChangesControl!: L.Control;
   private featureEditUndoControl!: L.Control;
-  
+
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
@@ -211,23 +211,31 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeLastVertexButton.hidden = true;
     this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
 
-    const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () => this.simplifyFeatures(Array.from(this.features.values())));
-    const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () => this.removeHolesInFeatures(Array.from(this.features.values())));
+    const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () =>
+      this.simplifyFeatures(Array.from(this.features.values()))
+    );
+    const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () =>
+      this.removeHolesInFeatures(Array.from(this.features.values()))
+    );
 
     this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'hand_cursor', () => this.toggleMultiSelectMode());
-    this.simplifySelectedFeaturesButton = this.leafletService.createButtonElement('Simplify selected segments', 'simplify', () => {
-      const selectedFeatures = Array.from(this.features.values()).filter(feature => this.selectedFids.has(feature.properties.fid));
-      this.simplifyFeatures(selectedFeatures);
-    });
+    this.simplifySelectedFeaturesButton = this.leafletService.createButtonElement('Simplify selected segments', 'simplify', () => 
+      this.simplifyFeatures(this.getSelectedFeatures())
+    );
     this.simplifySelectedFeaturesButton.style.backgroundColor = '#3388ff';
     this.simplifySelectedFeaturesButton.hidden = true;
 
-    this.removeHolesInSelectedFeaturesButton = this.leafletService.createButtonElement('Remove holes in selected segments', 'delete_inner_rings', () => {
-      const selectedFeatures = Array.from(this.features.values()).filter(feature => this.selectedFids.has(feature.properties.fid));
-      this.removeHolesInFeatures(selectedFeatures);
-    });
+    this.removeHolesInSelectedFeaturesButton = this.leafletService.createButtonElement('Remove holes in selected segments', 'delete_inner_rings', () => 
+      this.removeHolesInFeatures(this.getSelectedFeatures())
+    );
     this.removeHolesInSelectedFeaturesButton.style.backgroundColor = '#3388ff';
     this.removeHolesInSelectedFeaturesButton.hidden = true;
+
+    this.removeSelectedFeaturesButton = this.leafletService.createButtonElement('Remove selected features', 'delete', () => 
+      this.removeFeatures(this.getSelectedFeatures(), true)
+    );
+    this.removeSelectedFeaturesButton.style.backgroundColor = '#3388ff';
+    this.removeSelectedFeaturesButton.hidden = true;
 
     const editButtons = [
       this.drawFeatureButton,
@@ -237,7 +245,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       removeAllHolesButton,
       this.multiSelectButton,
       this.simplifySelectedFeaturesButton,
-      this.removeHolesInSelectedFeaturesButton
+      this.removeHolesInSelectedFeaturesButton,
+      this.removeSelectedFeaturesButton
     ];
     this.editFeatureControl = this.leafletService.createButtonsControl(editButtons, 'topleft').addTo(this.maskMap);
 
@@ -251,7 +260,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const exportButton = this.leafletService.createButtonElement('Export segmentation mask', 'export', () => this.exportMask());
     const saveExportButtons = [saveButton, resetFeaturesButton, exportButton];
     this.saveExportControl = this.leafletService.createButtonsControl(saveExportButtons, 'topleft').addTo(this.maskMap);
-    
+
     this.unsavedChangesControl = this.leafletService.createUnsavedChangesControl().addTo(this.maskMap);
 
     const undoButton = this.leafletService.createButtonElement('Undo last operation', 'undo', () => this.undoFeatureEdit());
@@ -335,6 +344,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.multiSelectButton.classList.toggle('active', this.multiSelectModeEnabled);
     this.simplifySelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
     this.removeHolesInSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
+    this.removeSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
 
     if (!this.multiSelectModeEnabled) {
       this.selectedFids.forEach(fid => {
@@ -392,8 +402,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const deleteButton = L.DomUtil.create('button', 'btn btn-danger me-2', deleteContainer);
     deleteButton.innerHTML = 'Remove';
     deleteButton.onclick = () => {
-      this.addToFeatureEditUndoStack([feature]);
-      this.removeFeature(fid);
+      this.removeFeature(feature, true);
     };
 
     const innerRingCount = feature.geometry.coordinates.length - 1;
@@ -488,7 +497,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     switch (feature.properties.grade) {
-      case FeatureGrade.TruePositive:  return { color: 'green' };
+      case FeatureGrade.TruePositive: return { color: 'green' };
       case FeatureGrade.FalsePositive: return { color: 'red' };
       case FeatureGrade.FalseNegative: return { color: 'orange' };
       default: return {};
@@ -546,6 +555,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       }
       this.featuresLayer.resetStyle(layer);
     });
+  }
+
+  private getSelectedFeatures(): Feature<Polygon, any>[] {
+    const features = Array.from(this.features.values());
+    return features.filter(feature => this.selectedFids.has(feature.properties.fid));
   }
 
   private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
@@ -613,8 +627,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private cutFeature(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon, any>): void {
     if (!feature) { // Feature is cutted out completely.
-      this.addToFeatureEditUndoStack([prevFeature]);
-      this.removeFeature(prevFeature.properties.fid);
+      this.removeFeature(prevFeature, true);
       return;
     }
 
@@ -644,8 +657,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.addToFeatureEditUndoStack(undoFeatures);
 
-    this.removeFeature(feature.properties.fid);
-    this.removeFeature(prevFeature.properties.fid);
+    this.removeFeature(feature as any);
+    this.removeFeature(prevFeature);
   }
 
   private simplifyFeature(fid: number, openPopup: boolean = false): boolean {
@@ -654,8 +667,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     let isSimplified = false;
     while (this.leafletService.hasNonTriangularRing(simplifiedFeature) &&
       feature.properties.simplifyTolerance <= this.maxSimplifyTolerance &&
-      this.leafletService.haveEqualPolygons(feature, simplifiedFeature))
-    {
+      this.leafletService.haveEqualPolygons(feature, simplifiedFeature)) {
       simplifiedFeature = this.leafletService.simplifyFeature(feature, ++feature.properties.simplifyTolerance);
       isSimplified = true;
     }
@@ -699,10 +711,22 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.addToFeatureEditUndoStack(featuresWithHole);
   }
 
-  private removeFeature(fid: number) {
-    this.featureLayers.get(fid)?.remove();
+  private removeFeature(feature: Feature<Polygon, any>, undo: boolean = false) {
+    if (undo) {
+      this.addToFeatureEditUndoStack([feature]);
+    }
+    const fid = feature.properties.fid;
     this.features.delete(fid);
+    this.selectedFids.delete(fid);
+    this.featuresLayer.removeLayer(this.featureLayers.get(fid)!);
     this.featureLayers.delete(fid);
+  }
+
+  private removeFeatures(features: Feature<Polygon, any>[], undo: boolean = false) {
+    if (undo) {
+      this.addToFeatureEditUndoStack(features);
+    }
+    features.forEach(feature => this.removeFeature(feature));
   }
 
   private saveChanges(): void {
@@ -775,7 +799,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     for (const feature of prevFeatures) {
       if (feature.geometry === null) {
         // Feature was created before undo, so remove it.
-        this.removeFeature(feature.properties.fid);
+        this.removeFeature(feature);
         continue;
       }
 
