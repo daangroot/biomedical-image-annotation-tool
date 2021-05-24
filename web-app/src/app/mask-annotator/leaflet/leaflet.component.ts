@@ -56,6 +56,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private features: Map<number, Feature<Polygon, any>> = new Map();
   private featureLayers: Map<number, L.Layer> = new Map();
   private featureEditUndoStack: Feature<Polygon, any>[][] = [];
+  private selectedFids: Set<number> = new Set();
   private unsavedChanges: boolean = false;
 
   private overallScore: number | null = null;
@@ -156,10 +157,16 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       )
     );
 
-    this.maskMap.on('pm:create', (result) => {
+    this.maskMap.on('pm:create', result => {
       this.createFeature(result.layer);
       this.toggleDrawMode(false);
     });
+
+    this.maskMap.on('pm:globalcutmodetoggled', (result: any) => {
+      if (this.cutModeEnabled && !result.enabled) {
+        this.toggleCutMode(false);
+      }
+    })
 
     this.maskMap.on('pm:cut', (result: any) => {
       this.cutFeature(result.layer.feature, result.originalLayer.feature);
@@ -200,10 +207,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeLastVertexButton.style.backgroundColor = '#3388ff';
     this.removeLastVertexButton.hidden = true;
     this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
-    this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'multi_select', () => this.toggleMultiSelectMode());
     const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () => this.simplifyAllFeatures());
     const removeAllHolesButton = this.leafletService.createButtonElement('Remove all holes', 'delete_inner_rings', () => this.removeAllHoles());
-    const editButtons = [this.drawFeatureButton, this.removeLastVertexButton, this.cutFeatureButton, this.multiSelectButton, simplifyAllFeaturesButton, removeAllHolesButton];
+    this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'hand_cursor', () => this.toggleMultiSelectMode());
+    const editButtons = [this.drawFeatureButton, this.removeLastVertexButton, this.cutFeatureButton, simplifyAllFeaturesButton, removeAllHolesButton, this.multiSelectButton];
     this.editFeatureControl = this.leafletService.createButtonsControl(editButtons, 'topleft').addTo(this.maskMap);
 
     const overallScoreButton = this.leafletService.createButtonElement('Rate overall accuracy', 'grade', () => this.setOverallScore());
@@ -262,6 +269,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.maskMap.pm.disableDraw();
       this.drawnVertexCount = 0;
       this.removeLastVertexButton.hidden = true;
+      // Reset on click listener, because for some reason Geoman changes it.
+      this.features.forEach((_feature, fid) =>
+        this.setOnFeatureClickListener(fid)
+      )
     }
   }
 
@@ -282,6 +293,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       });
     } else {
       this.maskMap.pm.disableGlobalCutMode();
+      // Reset on click listener, because for some reason Geoman changes it.
+      this.features.forEach((_feature, fid) =>
+        this.setOnFeatureClickListener(fid)
+      )
     }
   }
 
@@ -290,6 +305,14 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.multiSelectButton.title = this.multiSelectModeEnabled ? 'Cancel selecting segments' : 'Select segments';
     this.multiSelectButton.classList.toggle('active', this.multiSelectModeEnabled);
+
+    if (!this.multiSelectModeEnabled) {
+      this.selectedFids.forEach(fid => {
+        const layer = this.featureLayers.get(fid)!;
+        this.featuresLayer.resetStyle(layer);
+      });
+      this.selectedFids.clear();
+    }
   }
 
   private createFeaturePopup(fid: number): HTMLElement {
@@ -468,7 +491,31 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     layer.on('pm:update', result =>
       this.editFeature(fid, result.layer)
-    )
+    );
+
+    this.setOnFeatureClickListener(fid);
+  }
+
+  private setOnFeatureClickListener(fid: number): void {
+    const layer = this.featureLayers.get(fid)!;
+    layer.off('click');
+    layer.on('click', (event: any) => {
+      if (!this.multiSelectModeEnabled) {
+        layer.openPopup(event.latlng);
+        return;
+      }
+
+      if (this.selectedFids.has(fid)) {
+        this.featuresLayer.resetStyle(layer);
+        this.selectedFids.delete(fid);
+      } else {
+        // @ts-ignore
+        layer.setStyle({
+          color: 'yellow'
+        });
+        this.selectedFids.add(fid);
+      }
+    });
   }
 
   private updateFeatureLayer(fid: number, openPopup: boolean = false): void {
@@ -509,6 +556,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private onVertexDrawn(): void {
+    if (!this.drawModeEnabled) {
+      return;
+    }
+
     this.drawnVertexCount++;
     if (this.drawnVertexCount > 0) {
       this.removeLastVertexButton.hidden = false;
