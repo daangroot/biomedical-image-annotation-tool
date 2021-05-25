@@ -604,7 +604,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private setFeatureGrade(fid: number, grade: FeatureGrade): void {
     const feature = this.features.get(fid)!;
     feature.properties.grade = grade;
-    this.updateFeatureLayer(fid, true);
+    this.featuresLayer.resetStyle(this.featureLayers.get(fid));
     this.setUnsavedChanges(true);
   }
 
