@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
-import { Feature, Polygon, MultiPolygon } from 'geojson';
-import simplify from '@turf/simplify';
+import { FeatureCollection, Feature, Polygon, MultiPolygon } from 'geojson';
+import * as turf from '@turf/turf'
 
 @Injectable({
   providedIn: 'root'
@@ -110,15 +110,27 @@ export class LeafletService {
     return this.createFeature(this.layerToPoints(layer));
   }
 
-  splitMultiPolygonFeature(feature: Feature<MultiPolygon, any>): Feature<Polygon, any>[] {
-    return feature.geometry.coordinates.map(
-      polygon => this.createFeature(polygon as L.PointTuple[][])
-    )
+  splitPolygonFeature(feature: Feature<Polygon | MultiPolygon, any>): Feature<Polygon, any>[] {
+    if (feature.geometry.type === 'Polygon') {
+      return [feature as Feature<Polygon, any>];
+    } else {
+      return feature.geometry.coordinates.map(
+        polygon => this.createFeature(polygon as L.PointTuple[][])
+      )
+    }
+  }
+
+  mergeFeatures(features: Feature<Polygon, any>[]): Feature<Polygon | MultiPolygon, any> {
+    let mergedFeature: Feature<Polygon | MultiPolygon, any> = features[0];
+    for (let i = 1; i < features.length; i++) {
+      mergedFeature = turf.union(mergedFeature, features[i]);
+    }
+    return mergedFeature;
   }
 
   simplifyFeature(feature: Feature<Polygon, any>, tolerance: number = 1): Feature<Polygon, any> {
     // turf simplify uses the Ramer-Douglas-Peucker algorithm.
-    return simplify(feature, {
+    return turf.simplify(feature, {
       tolerance: tolerance
     });
   }

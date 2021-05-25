@@ -11,6 +11,7 @@ import { ImageMetadata } from '../../types/image-metadata.type';
 import { MaskApiService } from '../../services/mask-api.service';
 import { AnnotationData } from '../../types/annotation-data.type';
 import { StatisticsComponent } from '../statistics/statistics.component';
+import { feature } from '@turf/turf';
 
 @Component({
   selector: 'app-leaflet',
@@ -40,6 +41,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private removeLastVertexButton!: HTMLElement;
   private cutFeatureButton!: HTMLElement;
   private multiSelectButton!: HTMLElement;
+  private mergeSelectedFeaturesButton!: HTMLElement;
   private simplifySelectedFeaturesButton!: HTMLElement;
   private removeHolesInSelectedFeaturesButton!: HTMLElement;
   private removeSelectedFeaturesButton!: HTMLElement;
@@ -219,6 +221,13 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     );
 
     this.multiSelectButton = this.leafletService.createButtonElement('Select segments', 'hand_cursor', () => this.toggleMultiSelectMode());
+
+    this.mergeSelectedFeaturesButton = this.leafletService.createButtonElement('Merge selected segments', 'merge', () =>
+      this.mergeFeatures(this.getSelectedFeatures())
+    );
+    this.mergeSelectedFeaturesButton.style.backgroundColor = '#3388ff';
+    this.mergeSelectedFeaturesButton.hidden = true;
+
     this.simplifySelectedFeaturesButton = this.leafletService.createButtonElement('Simplify selected segments', 'simplify', () => 
       this.simplifyFeatures(this.getSelectedFeatures())
     );
@@ -244,6 +253,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       simplifyAllFeaturesButton,
       removeAllHolesButton,
       this.multiSelectButton,
+      this.mergeSelectedFeaturesButton,
       this.simplifySelectedFeaturesButton,
       this.removeHolesInSelectedFeaturesButton,
       this.removeSelectedFeaturesButton
@@ -342,6 +352,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.multiSelectButton.title = this.multiSelectModeEnabled ? 'Cancel selecting segments' : 'Select segments';
     this.multiSelectButton.classList.toggle('active', this.multiSelectModeEnabled);
+    this.mergeSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
     this.simplifySelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
     this.removeHolesInSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
     this.removeSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
@@ -633,14 +644,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     const undoFeatures = [prevFeature];
 
-    let features: Feature<Polygon, any>[] = [];
-    if (feature.geometry.type === 'Polygon') {
-      const copy = JSON.parse(JSON.stringify(feature));
-      copy.properties = {};
-      features = [copy];
-    } else {
-      features = this.leafletService.splitMultiPolygonFeature(feature as Feature<MultiPolygon, any>);
-    }
+    const copy = JSON.parse(JSON.stringify(feature));
+    copy.properties = {};
+    const features = this.leafletService.splitPolygonFeature(copy);
 
     for (const feature of features) {
       feature.geometry.coordinates = feature.geometry.coordinates.map(
@@ -648,6 +654,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
           latLng => this.leafletService.toPoint(L.latLng(latLng[1], latLng[0]))
         )
       )
+
       this.featuresLayer.addData(feature);
 
       const prevFeature = JSON.parse(JSON.stringify(feature));
@@ -659,6 +666,28 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.removeFeature(feature as any);
     this.removeFeature(prevFeature);
+  }
+
+  private mergeFeatures(features: Feature<Polygon, any>[]): void {
+    if (features.length === 0) {
+      return;
+    }
+
+    const mergedFeature = this.leafletService.mergeFeatures(features);
+    const newFeatures = this.leafletService.splitPolygonFeature(mergedFeature);
+
+    const undoFeatures = [];
+
+    for (const feature of newFeatures) {
+      this.featuresLayer.addData(feature);
+
+      const prevFeature = JSON.parse(JSON.stringify(feature));
+      prevFeature.geometry = null;
+      undoFeatures.push(prevFeature);
+    }
+
+    this.addToFeatureEditUndoStack(undoFeatures.concat(features));
+    features.forEach(feature => this.removeFeature(feature));
   }
 
   private simplifyFeature(fid: number, openPopup: boolean = false): boolean {
