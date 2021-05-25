@@ -229,7 +229,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.mergeSelectedFeaturesButton.style.backgroundColor = '#3388ff';
     this.mergeSelectedFeaturesButton.hidden = true;
 
-    this.convexSelectedFeaturesButton = this.leafletService.createButtonElement('Create convex hull of selected segments', 'layers', () =>
+    this.convexSelectedFeaturesButton = this.leafletService.createButtonElement('Create convex hull of selected segments', 'convex_hull', () =>
       this.createConvexHull(this.getSelectedFeatures())
     );
     this.convexSelectedFeaturesButton.style.backgroundColor = '#3388ff';
