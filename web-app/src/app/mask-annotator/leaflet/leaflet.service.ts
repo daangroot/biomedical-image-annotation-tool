@@ -128,6 +128,11 @@ export class LeafletService {
     return mergedFeature;
   }
 
+  createConvexHullFeature(features: Feature<Polygon, any>[]): Feature<Polygon, any> | null {
+    const featureCollection = turf.featureCollection(features);
+    return turf.convex(featureCollection);
+  }
+
   simplifyFeature(feature: Feature<Polygon, any>, tolerance: number = 1): Feature<Polygon, any> {
     // turf simplify uses the Ramer-Douglas-Peucker algorithm.
     return turf.simplify(feature, {

@@ -42,6 +42,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private cutFeatureButton!: HTMLElement;
   private multiSelectButton!: HTMLElement;
   private mergeSelectedFeaturesButton!: HTMLElement;
+  private convexSelectedFeaturesButton!: HTMLElement;
   private simplifySelectedFeaturesButton!: HTMLElement;
   private removeHolesInSelectedFeaturesButton!: HTMLElement;
   private removeSelectedFeaturesButton!: HTMLElement;
@@ -228,6 +229,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.mergeSelectedFeaturesButton.style.backgroundColor = '#3388ff';
     this.mergeSelectedFeaturesButton.hidden = true;
 
+    this.convexSelectedFeaturesButton = this.leafletService.createButtonElement('Create convex hull of selected segments', 'layers', () =>
+      this.createConvexHull(this.getSelectedFeatures())
+    );
+    this.convexSelectedFeaturesButton.style.backgroundColor = '#3388ff';
+    this.convexSelectedFeaturesButton.hidden = true;
+
     this.simplifySelectedFeaturesButton = this.leafletService.createButtonElement('Simplify selected segments', 'simplify', () => 
       this.simplifyFeatures(this.getSelectedFeatures())
     );
@@ -254,6 +261,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       removeAllHolesButton,
       this.multiSelectButton,
       this.mergeSelectedFeaturesButton,
+      this.convexSelectedFeaturesButton,
       this.simplifySelectedFeaturesButton,
       this.removeHolesInSelectedFeaturesButton,
       this.removeSelectedFeaturesButton
@@ -353,6 +361,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.multiSelectButton.title = this.multiSelectModeEnabled ? 'Cancel selecting segments' : 'Select segments';
     this.multiSelectButton.classList.toggle('active', this.multiSelectModeEnabled);
     this.mergeSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
+    this.convexSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
     this.simplifySelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
     this.removeHolesInSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
     this.removeSelectedFeaturesButton.hidden = !this.multiSelectModeEnabled;
@@ -688,6 +697,21 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     this.addToFeatureEditUndoStack(undoFeatures.concat(features));
+    features.forEach(feature => this.removeFeature(feature));
+  }
+
+  private createConvexHull(features: Feature<Polygon, any>[]): void {
+    const convexHullFeature = this.leafletService.createConvexHullFeature(features);
+    if (convexHullFeature === null) {
+      return;
+    }
+
+    this.featuresLayer.addData(convexHullFeature);
+
+    const prevFeature = JSON.parse(JSON.stringify(convexHullFeature));
+    prevFeature.geometry = null;
+    this.addToFeatureEditUndoStack(features.concat(prevFeature));
+
     features.forEach(feature => this.removeFeature(feature));
   }
 
