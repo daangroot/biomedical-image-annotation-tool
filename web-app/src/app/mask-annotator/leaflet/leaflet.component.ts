@@ -664,6 +664,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.addToFeatureEditUndoStack(undoFeatures);
 
+    this.featureLayers.get(feature.properties.fid)!.remove();
     this.removeFeature(feature as any);
     this.removeFeature(prevFeature);
   }
