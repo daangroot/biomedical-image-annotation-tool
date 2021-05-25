@@ -476,7 +476,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const gradeSelect = L.DomUtil.create('select', 'form-select', gradingContainer) as HTMLSelectElement;
     gradeSelect.id = `segment-grade-${fid}`;
 
-    L.DomUtil.create('option', undefined, gradeSelect);
+    const unspecified = L.DomUtil.create('option', undefined, gradeSelect) as HTMLOptionElement;
+    unspecified.selected = feature.properties.grade == null;
 
     const truePositive = L.DomUtil.create('option', undefined, gradeSelect) as HTMLOptionElement;
     truePositive.innerHTML = 'True positive';
@@ -491,7 +492,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     falseNegative.selected = feature.properties.grade === FeatureGrade.FalseNegative;
 
     gradeSelect.oninput = () => {
-      let grade;
+      let grade = null;
       if (truePositive.selected) {
         grade = FeatureGrade.TruePositive;
       } else if (falsePositive.selected) {
@@ -499,9 +500,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       } else if (falseNegative.selected) {
         grade = FeatureGrade.FalseNegative;
       }
-      if (grade != null) {
-        this.setFeatureGrade(fid, grade);
-      }
+      this.setFeatureGrade(fid, grade);
     }
 
     return gradingContainer;
@@ -601,7 +600,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     catch { }
   }
 
-  private setFeatureGrade(fid: number, grade: FeatureGrade): void {
+  private setFeatureGrade(fid: number, grade: FeatureGrade | null): void {
     const feature = this.features.get(fid)!;
     feature.properties.grade = grade;
     this.featuresLayer.resetStyle(this.featureLayers.get(fid));
