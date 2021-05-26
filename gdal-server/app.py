@@ -5,6 +5,9 @@ from flask import Flask, jsonify, request, send_file, after_this_request
 from pathlib import Path
 from osgeo import gdal, ogr
 
+import rasterio.features
+from PIL import Image
+
 APP_FOLDER = '/usr/src/app'
 UPLOAD_FOLDER = APP_FOLDER + '/uploads'
 OUTPUT_FOLDER = APP_FOLDER + '/output'
@@ -88,6 +91,38 @@ def rasterize():
     @after_this_request
     def remove_files(response):
         path.unlink()
+        out_path.unlink()
+        return response
+
+    return send_file(out_path)
+
+
+def pixel_value(f):
+    p = f['properties']
+    if 'grade' in p and p['grade'] is not None:
+        VALUES = { 0: 192, 1: 144, 2: 96, 3: 48 }
+        return VALUES[p['grade']]
+
+    return 255
+
+
+@app.route('/rasterize-grayscale', methods=["POST"])
+def rasterize_grayscale():
+    data = request.get_json()
+    width = data['width']
+    height = data['height']
+    features = data['features']
+
+    shapes = ((f['geometry'], pixel_value(f)) for f in features)
+    raster = rasterio.features.rasterize(shapes, out_shape=(height, width))
+    img = Image.fromarray(raster)
+
+    out_path = Path(OUTPUT_FOLDER) / (str(uuid.uuid1()) + '.tif')
+
+    img.save(str(out_path))
+
+    @after_this_request
+    def remove_file(response):
         out_path.unlink()
         return response
 
