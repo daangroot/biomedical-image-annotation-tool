@@ -32,7 +32,7 @@ async function getAllMaskMetadata(imageId) {
 	return metadataList
 }
 
-async function generateMask(imageId, maskId) {
+async function generateMask(imageId, maskId, exportType) {
 	const metadata = await getMaskMetadata(imageId, maskId)
 
 	const filePath = `images/${imageId}/masks/${maskId}/annotation_data_saved.json`
@@ -44,7 +44,12 @@ async function generateMask(imageId, maskId) {
 		features: JSON.parse(annotationData).features
 	}
 
-	const response = await axios.post(GDAL_SERVER_URL + '/rasterize', json, {
+	let url = GDAL_SERVER_URL + '/rasterize'
+	if (exportType === 'grayscale') {
+		url += '-grayscale'
+	}
+
+	const response = await axios.post(url, json, {
 		responseType: 'stream'
 	})
 
