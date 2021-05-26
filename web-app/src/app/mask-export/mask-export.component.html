@@ -10,8 +10,11 @@
           <button type="button" class="btn btn-primary" (click)="exportAnnotationData()" *ngIf="!isLoading">Export JSON</button>
           <div class="spinner-border text-primary" role="status" *ngIf="isLoading"></div>
         </div>
+        <div class="mb-2">
+          <a class="btn btn-primary" href="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ maskId }}" download *ngIf="imageId">Export black/white image</a>
+        </div>
         <div>
-          <a class="btn btn-primary" href="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ maskId }}" download *ngIf="imageId">Export image</a>
+          <a class="btn btn-primary" href="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ maskId }}?type=grayscale" download *ngIf="imageId">Export grayscale image</a>
         </div>
       </div>
     </div>
