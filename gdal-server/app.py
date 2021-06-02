@@ -2,7 +2,7 @@ import json
 import uuid
 
 from io import BytesIO
-from flask import Flask, jsonify, request, send_file, after_this_request
+from flask import Flask, jsonify, request, send_file
 from pathlib import Path
 from osgeo import gdal, ogr
 
@@ -12,6 +12,8 @@ from PIL import Image
 APP_FOLDER = '/usr/src/app'
 UPLOAD_FOLDER = APP_FOLDER + '/uploads'
 OUTPUT_FOLDER = APP_FOLDER + '/output'
+
+COLORS = { 0: 192, 1: 144, 2: 96 }
 
 app = Flask(__name__)
 
@@ -60,14 +62,33 @@ def polygonize():
     return jsonify(features)
 
 
+def features_to_shapes(features, grayscale, true_positive, false_positive, false_negative):
+    shapes = []
+    for feature in features:
+        properties = feature['properties']
+        if 'grade' in properties and properties['grade'] is not None:
+            grade = properties['grade']
+            if (grade == 0 and true_positive) or (grade == 1 and false_positive) or (grade == 2 and false_negative):
+                shapes.append((feature['geometry'], COLORS[grade] if grayscale else 255))
+        else:
+            shapes.append((feature['geometry'], 255))
+
+    return shapes
+
+
 @app.route('/rasterize', methods=['POST'])
 def rasterize():
     data = request.get_json()
     width = data['width']
     height = data['height']
     features = data['features']
+    
+    grayscale = int(request.args.get('grayscale', '0'))
+    true_positive = int(request.args.get('true-positive', '1'))
+    false_positive = int(request.args.get('false-positive', '1'))
+    false_negative = int(request.args.get('false-negative', '1'))
 
-    shapes = ((f['geometry'], 255) for f in features)
+    shapes = features_to_shapes(features, grayscale, true_positive, false_positive, false_negative)
     raster = rasterio.features.rasterize(shapes, out_shape=(height, width))
     img = Image.fromarray(raster)
     img_stream = BytesIO()
@@ -75,35 +96,3 @@ def rasterize():
     img_stream.seek(0)
 
     return send_file(img_stream, mimetype='image/tiff')
-
-
-def pixel_value(f):
-    p = f['properties']
-    if 'grade' in p and p['grade'] is not None:
-        VALUES = { 0: 192, 1: 144, 2: 96, 3: 48 }
-        return VALUES[p['grade']]
-
-    return 255
-
-
-@app.route('/rasterize-grayscale', methods=["POST"])
-def rasterize_grayscale():
-    data = request.get_json()
-    width = data['width']
-    height = data['height']
-    features = data['features']
-
-    shapes = ((f['geometry'], pixel_value(f)) for f in features)
-    raster = rasterio.features.rasterize(shapes, out_shape=(height, width))
-    img = Image.fromarray(raster)
-
-    out_path = Path(OUTPUT_FOLDER) / (str(uuid.uuid1()) + '.tif')
-
-    img.save(str(out_path))
-
-    @after_this_request
-    def remove_file(response):
-        out_path.unlink()
-        return response
-
-    return send_file(out_path)
