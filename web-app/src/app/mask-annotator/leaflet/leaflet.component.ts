@@ -48,7 +48,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private removeSelectedFeaturesButton!: HTMLElement;
   private editFeatureControl!: L.Control;
   private splitScreenControl!: L.Control;
-  private gradeControl!: L.Control;
+  private showStatisticsControl!: L.Control;
   private saveExportControl!: L.Control;
   private unsavedChangesControl!: L.Control;
   private featureEditUndoControl!: L.Control;
@@ -64,8 +64,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private featureEditUndoStack: Feature<Polygon, any>[][] = [];
   private selectedFids: Set<number> = new Set();
   private unsavedChanges: boolean = false;
-
-  private overallScore: number | null = null;
 
   private readonly tileSize: number = 128;
   private readonly maxSimplifyTolerance: number = 10000;
@@ -93,7 +91,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskApiService.fetchAnnotationData(this.imageId, this.maskId).subscribe(
       annotationData => {
         this.featuresLayer.addData(annotationData.features as any);
-        this.overallScore = annotationData.overallScore;
       },
       error => window.alert('Failed to retrieve annotation data from server!')
     )
@@ -268,10 +265,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     ];
     this.editFeatureControl = this.leafletService.createButtonsControl(editButtons, 'topleft').addTo(this.maskMap);
 
-    const overallScoreButton = this.leafletService.createButtonElement('Rate overall accuracy', 'grade', () => this.setOverallScore());
-    const statisticsButton = this.leafletService.createButtonElement('Show statistics', 'statistics', () => this.showStatistics());
-    const gradeButtons = [overallScoreButton, statisticsButton];
-    this.gradeControl = this.leafletService.createButtonsControl(gradeButtons, 'topleft').addTo(this.maskMap);
+    const showStatisticsButton = this.leafletService.createButtonElement('Show statistics', 'statistics', () => this.showStatistics());
+    this.showStatisticsControl = this.leafletService.createButtonControl(showStatisticsButton, 'topleft').addTo(this.maskMap);
 
     const saveButton = this.leafletService.createButtonElement('Save segments and grades', 'save', () => this.saveChanges());
     const resetFeaturesButton = this.leafletService.createButtonElement('Reset segments and grades', 'restore', () => this.resetAnnotationData());
@@ -294,12 +289,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     if (this.showTopLeftControls) {
       this.splitScreenControl.addTo(this.maskMap);
       this.editFeatureControl.addTo(this.maskMap);
-      this.gradeControl.addTo(this.maskMap);
+      this.showStatisticsControl.addTo(this.maskMap);
       this.saveExportControl.addTo(this.maskMap);
     } else {
       this.splitScreenControl.remove();
       this.editFeatureControl.remove();
-      this.gradeControl.remove();
+      this.showStatisticsControl.remove();
       this.saveExportControl.remove();
     }
   }
@@ -749,8 +744,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private saveChanges(): void {
     const annotationData: AnnotationData = {
       features: Array.from(this.features.values()),
-      overallScore: this.overallScore
-    }
+    };
 
     this.maskApiService.saveAnnotationData(this.imageId, this.maskId, annotationData).subscribe(
       next => {
@@ -783,7 +777,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private showStatistics(): void {
     const button = document.getElementById('show-statistics-button')!;
-    this.statisticsComponent.show(button, this.overallScore, this.features);
+    this.statisticsComponent.show(button, this.features);
   }
 
   private exportMask(): void {
@@ -842,24 +836,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     this.setUnsavedChanges(true);
-  }
-
-  private setOverallScore() {
-    const defaultText = this.overallScore !== null ? this.overallScore.toString() : '';
-    const value = window.prompt('How accurate is the segmentation overall? (0-100%)', defaultText);
-
-    if (!value) {
-      return;
-    }
-
-    try {
-      const score = parseInt(value);
-
-      if (!isNaN(score) && score >= 0 && score <= 100) {
-        this.overallScore = score;
-        this.setUnsavedChanges(true);
-      }
-    } catch { }
   }
 
   @HostListener('window:beforeunload', ['$event'])

@@ -71,7 +71,6 @@ async function processMask(imageId, maskProperties) {
 async function createAnnotationData(sourcePath, targetPath) {
 	annotationData = JSON.stringify({
 		features: await maskToGeoJson(sourcePath),
-		overallScore: null
 	})
 	await fsAsync.writeFile(targetPath + '/annotation_data_original.json', annotationData)
 	await fsAsync.writeFile(targetPath + '/annotation_data_saved.json', annotationData)

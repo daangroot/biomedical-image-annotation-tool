@@ -12,7 +12,6 @@ export class StatisticsComponent implements AfterViewInit {
 
   private offcanvas!: Offcanvas;
 
-  overallScore: number | null = null;
   truePositiveCount: number = 0;
   falsePositiveCount: number = 0;
   falseNegativeCount: number = 0;
@@ -26,13 +25,12 @@ export class StatisticsComponent implements AfterViewInit {
     this.offcanvas = new Offcanvas(element);
   }
 
-  show(relatedTarget: HTMLElement, overallScore: number | null, features: Map<number, Feature<Polygon, any>>): void {
-    this.updateStatistics(overallScore, features);
+  show(relatedTarget: HTMLElement, features: Map<number, Feature<Polygon, any>>): void {
+    this.updateStatistics(features);
     this.offcanvas.show(relatedTarget);
   }
 
-  private updateStatistics(overallScore: number | null, features: Map<number, Feature<Polygon, any>>): void {
-    this.overallScore = overallScore;
+  private updateStatistics(features: Map<number, Feature<Polygon, any>>): void {
     this.truePositiveCount = 0;
     this.falsePositiveCount = 0;
     this.falseNegativeCount = 0;
