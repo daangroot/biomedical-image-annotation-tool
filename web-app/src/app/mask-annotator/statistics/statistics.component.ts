@@ -13,7 +13,6 @@ export class StatisticsComponent implements AfterViewInit {
   private offcanvas!: Offcanvas;
 
   overallScore: number | null = null;
-  averageScore: number | null = null;
   truePositiveCount: number = 0;
   falsePositiveCount: number = 0;
   falseNegativeCount: number = 0;
@@ -34,7 +33,6 @@ export class StatisticsComponent implements AfterViewInit {
 
   private updateStatistics(overallScore: number | null, features: Map<number, Feature<Polygon, any>>): void {
     this.overallScore = overallScore;
-    this.averageScore = null;
     this.truePositiveCount = 0;
     this.falsePositiveCount = 0;
     this.falseNegativeCount = 0;
@@ -45,27 +43,13 @@ export class StatisticsComponent implements AfterViewInit {
       return;
     }
 
-    this.averageScore = 0;
-    let segmentsWithScore = 0;
-
     for (const feature of features.values()) {
-      if (feature.properties.score) {
-        this.averageScore += feature.properties.score;
-        segmentsWithScore++;
-      }
-
       switch (feature.properties.grade) {
         case FeatureGrade.TruePositive: this.truePositiveCount++; break;
         case FeatureGrade.FalsePositive: this.falsePositiveCount++; break;
         case FeatureGrade.FalseNegative: this.falseNegativeCount++; break;
         default: this.unspecifiedCount++; break;
       }
-    }
-
-    if (segmentsWithScore != 0) {
-      this.averageScore /= segmentsWithScore;
-    } else {
-      this.averageScore = null;
     }
   }
 

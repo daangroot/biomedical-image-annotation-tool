@@ -442,31 +442,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const feature = this.features.get(fid)!;
     const gradingContainer = L.DomUtil.create('div', 'mb-3');
 
-    // Segment score
-
-    const scoreLabel = L.DomUtil.create('label', 'form-label', gradingContainer) as HTMLLabelElement;
-    scoreLabel.htmlFor = `segment-score-${fid}`;
-    scoreLabel.innerHTML = 'Segment accuracy';
-
-    const scoreContainer = L.DomUtil.create('div', 'input-group mb-2', gradingContainer);
-
-    const scoreInput = L.DomUtil.create('input', 'form-control', scoreContainer) as HTMLInputElement;
-    scoreInput.type = 'number';
-    scoreInput.min = '0';
-    scoreInput.max = '100';
-    scoreInput.placeholder = 'Score';
-    scoreInput.id = `segment-score-${fid}`;
-    scoreInput.oninput = (event: Event) => {
-      const scoreInput = event.target as HTMLInputElement;
-      this.setFeatureScore(fid, scoreInput.value);
-    }
-    if (feature.properties.score != null) {
-      scoreInput.value = feature.properties.score.toString();
-    }
-
-    const scoreText = L.DomUtil.create('span', 'input-group-text', scoreContainer);
-    scoreText.innerHTML = '%';
-
     // Grading
 
     const gradeLabel = L.DomUtil.create('label', 'form-label', gradingContainer) as HTMLLabelElement;
@@ -543,7 +518,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       feature.properties.simplifyTolerance = 0;
     }
 
-    feature.properties.score ??= null;
     feature.properties.grade ??= null;
 
     this.features.set(fid, feature);
@@ -588,16 +562,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     if (openPopup) {
       this.featureLayers.get(fid)!.openPopup();
     }
-  }
-
-  private setFeatureScore(fid: number, scoreString: string): void {
-    try {
-      const score = parseInt(scoreString);
-      const feature = this.features.get(fid)!;
-      feature.properties.score = score;
-      this.setUnsavedChanges(true);
-    }
-    catch { }
   }
 
   private setFeatureGrade(fid: number, grade: FeatureGrade | null): void {
