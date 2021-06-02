@@ -437,41 +437,53 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const feature = this.features.get(fid)!;
     const gradingContainer = L.DomUtil.create('div', 'mb-3');
 
-    // Grading
+    const gradeButtons = L.DomUtil.create('div', 'btn-group-vertical', gradingContainer);
 
-    const gradeLabel = L.DomUtil.create('label', 'form-label', gradingContainer) as HTMLLabelElement;
-    gradeLabel.htmlFor = `segment-grade-${fid}`;
-    gradeLabel.innerHTML = 'Segment grade';
+    const truePositive = L.DomUtil.create('input', 'btn-check', gradeButtons) as HTMLInputElement;
+    truePositive.type = 'radio';
+    truePositive.name = `segment-grade-${fid}`;
+    truePositive.id = `segment-grade-${fid}-truepositive`;
+    truePositive.checked = feature.properties.grade === FeatureGrade.TruePositive;
 
-    const gradeSelect = L.DomUtil.create('select', 'form-select', gradingContainer) as HTMLSelectElement;
-    gradeSelect.id = `segment-grade-${fid}`;
+    const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-success', gradeButtons) as HTMLLabelElement;
+    truePositiveLabel.innerHTML = 'True Positive';
+    truePositiveLabel.htmlFor = truePositive.id;
 
-    const unspecified = L.DomUtil.create('option', undefined, gradeSelect) as HTMLOptionElement;
-    unspecified.selected = feature.properties.grade == null;
+    const falsePositive = L.DomUtil.create('input', 'btn-check', gradeButtons) as HTMLInputElement;
+    falsePositive.type = 'radio';
+    falsePositive.name = `segment-grade-${fid}`;
+    falsePositive.id = `segment-grade-${fid}-falsepositive`;
+    falsePositive.checked = feature.properties.grade === FeatureGrade.FalsePositive;
 
-    const truePositive = L.DomUtil.create('option', undefined, gradeSelect) as HTMLOptionElement;
-    truePositive.innerHTML = 'True positive';
-    truePositive.selected = feature.properties.grade === FeatureGrade.TruePositive;
+    const falsePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-danger', gradeButtons) as HTMLLabelElement;
+    falsePositiveLabel.innerHTML = 'False Positive';
+    falsePositiveLabel.htmlFor = falsePositive.id;
 
-    const falsePositive = L.DomUtil.create('option', undefined, gradeSelect) as HTMLOptionElement;
-    falsePositive.innerHTML = 'False positive';
-    falsePositive.selected = feature.properties.grade === FeatureGrade.FalsePositive;
+    const falseNegative = L.DomUtil.create('input', 'btn-check', gradeButtons) as HTMLInputElement;
+    falseNegative.type = 'radio';
+    falseNegative.name = `segment-grade-${fid}`;
+    falseNegative.id = `segment-grade-${fid}-falsenegative`;
+    falseNegative.checked = feature.properties.grade === FeatureGrade.FalseNegative;
 
-    const falseNegative = L.DomUtil.create('option', undefined, gradeSelect) as HTMLOptionElement;
-    falseNegative.innerHTML = 'False negative';
-    falseNegative.selected = feature.properties.grade === FeatureGrade.FalseNegative;
+    const falseNegativeLabel = L.DomUtil.create('label', 'btn btn-outline-warning', gradeButtons) as HTMLLabelElement;
+    falseNegativeLabel.innerHTML = 'False Negative';
+    falseNegativeLabel.htmlFor = falseNegative.id;
 
-    gradeSelect.oninput = () => {
+    const onChange = () => {
       let grade = null;
-      if (truePositive.selected) {
+      if (truePositive.checked) {
         grade = FeatureGrade.TruePositive;
-      } else if (falsePositive.selected) {
+      } else if (falsePositive.checked) {
         grade = FeatureGrade.FalsePositive;
-      } else if (falseNegative.selected) {
+      } else if (falseNegative.checked) {
         grade = FeatureGrade.FalseNegative;
       }
       this.setFeatureGrade(fid, grade);
-    }
+    };
+
+    truePositive.onchange = onChange;
+    falsePositive.onchange = onChange;
+    falseNegative.onchange = onChange;
 
     return gradingContainer;
   }
@@ -513,7 +525,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       feature.properties.simplifyTolerance = 0;
     }
 
-    feature.properties.grade ??= null;
+    if (feature.properties.grade == null) {
+      feature.properties.grade = FeatureGrade.TruePositive;
+    }
 
     this.features.set(fid, feature);
     this.featureLayers.set(fid, layer);
