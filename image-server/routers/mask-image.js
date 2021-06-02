@@ -30,12 +30,12 @@ router.get('/images/:imageId/masks/info', async (req, res) => {
 router.get('/images/:imageId/masks/:maskId', async (req, res) => {
 	const imageId = req.params.imageId
 	const maskId = req.params.maskId
-	const exportType = req.query.type
+	const grayscale = req.query.grayscale !== undefined ? req.query.grayscale : 0
 
 	try {
 		const metadata = await service.getMaskMetadata(imageId, maskId)
 		res.header('Content-Disposition', `attachment; filename="${metadata.originalName}"`)
-		const stream = await service.generateMask(imageId, maskId, exportType)
+		const stream = await service.generateMask(imageId, maskId, grayscale)
 		stream.pipe(res)
 	} catch (error) {
 		console.error(error)
