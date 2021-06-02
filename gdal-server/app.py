@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from io import BytesIO
 from flask import Flask, jsonify, request, send_file, after_this_request
 from pathlib import Path
 from osgeo import gdal, ogr
@@ -67,34 +68,14 @@ def rasterize():
     height = data['height']
     features = data['features']
 
-    geojson = {
-        'type': 'FeatureCollection',
-        'features': features
-    }
+    shapes = ((f['geometry'], 255) for f in features)
+    raster = rasterio.features.rasterize(shapes, out_shape=(height, width))
+    img = Image.fromarray(raster)
+    img_stream = BytesIO()
+    img.save(img_stream, format='TIFF', compression='packbits')
+    img_stream.seek(0)
 
-    path = Path(UPLOAD_FOLDER) / (str(uuid.uuid1()) + '.json')
-    with open(path, 'w') as file:
-        json.dump(geojson, file)
-
-    out_path = Path(OUTPUT_FOLDER) / (str(uuid.uuid1()) + '.tif')
-
-    src_ds = ogr.Open(str(path))
-    src_layer = src_ds.GetLayer(0)
-    driver = gdal.GetDriverByName('GTiff')
-    target_ds = driver.Create(str(out_path), width, height)
-
-    gdal.RasterizeLayer(target_ds, [1], src_layer)
-
-    src_ds = None
-    target_ds = None
-
-    @after_this_request
-    def remove_files(response):
-        path.unlink()
-        out_path.unlink()
-        return response
-
-    return send_file(out_path)
+    return send_file(img_stream, mimetype='image/tiff')
 
 
 def pixel_value(f):
