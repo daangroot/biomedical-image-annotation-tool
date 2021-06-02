@@ -51,14 +51,13 @@ def polygonize():
     src_ds = None
     target_ds = None
 
-    @after_this_request 
-    def remove_files(response):
-        path.unlink()
-        out_path.unlink()
-        return response
-
     with open(out_path) as file:
-        return jsonify(json.load(file)['features'])
+        features = json.load(file)['features']
+
+    path.unlink()
+    out_path.unlink()
+
+    return jsonify(features)
 
 
 @app.route('/rasterize', methods=['POST'])
