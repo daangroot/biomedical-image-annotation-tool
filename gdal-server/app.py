@@ -64,13 +64,9 @@ def polygonize():
 
 def features_to_shapes(features, grayscale, true_positive, false_positive, false_negative):
     for feature in features:
-        properties = feature['properties']
-        if 'grade' in properties and properties['grade'] is not None:
-            grade = properties['grade']
-            if (grade == 0 and true_positive) or (grade == 1 and false_positive) or (grade == 2 and false_negative):
-                yield (feature['geometry'], COLORS[grade] if grayscale else 255)
-        else:
-            yield (feature['geometry'], 255)
+        grade = feature['properties']['grade']
+        if (grade == 0 and true_positive) or (grade == 1 and false_positive) or (grade == 2 and false_negative):
+            yield (feature['geometry'], COLORS[grade] if grayscale else 255)
 
 
 @app.route('/rasterize', methods=['POST'])
