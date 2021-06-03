@@ -389,6 +389,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     editButton.onclick = () => {
       editButton.hidden = true;
       finishEditButton.hidden = false;
+      layer.getPopup()?.update();
       layer.pm.enable({
         allowSelfIntersection: false,
         limitMarkersToCount: 256
@@ -401,6 +402,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     finishEditButton.onclick = () => {
       editButton.hidden = false;
       finishEditButton.hidden = true;
+      layer.getPopup()?.update();
       layer.pm.disable();
     };
 
