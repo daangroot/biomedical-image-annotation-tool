@@ -389,9 +389,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     editButton.onclick = () => {
       editButton.hidden = true;
       finishEditButton.hidden = false;
+      layer.getPopup()?.update();
       layer.pm.enable({
         allowSelfIntersection: false,
-        limitMarkersToCount: 256
+        limitMarkersToCount: 256,
+        removeLayerBelowMinVertexCount: false
       })
     };
 
@@ -401,6 +403,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     finishEditButton.onclick = () => {
       editButton.hidden = false;
       finishEditButton.hidden = true;
+      layer.getPopup()?.update();
       layer.pm.disable();
     };
 
@@ -614,6 +617,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const feature = this.features.get(fid)!;
     this.addToFeatureEditUndoStack([feature]);
     feature.geometry.coordinates = this.leafletService.layerToPoints(layer);
+    feature.properties.simplifyTolerance = 0;
+    layer.setPopupContent(this.createFeaturePopup(fid));
   }
 
   private cutFeature(feature: Feature<Polygon | MultiPolygon, any>, prevFeature: Feature<Polygon, any>): void {

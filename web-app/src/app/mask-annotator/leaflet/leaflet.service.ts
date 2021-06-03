@@ -97,7 +97,7 @@ export class LeafletService {
 
   layerToPoints(layer: L.Layer): L.PointTuple[][] {
     // @ts-ignore
-    const latLngs = layer._latlngs as L.LatLng[][];
+    const latLngs = JSON.parse(JSON.stringify(layer._latlngs)) as L.LatLng[][];
     for (const ring of latLngs) {
       if (ring[0].lat !== ring[ring.length - 1].lat || ring[0].lng !== ring[ring.length - 1].lng) {
         ring.push(ring[0]);
