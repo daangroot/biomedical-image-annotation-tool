@@ -30,9 +30,9 @@ router.get('/images/:imageId/masks/info', async (req, res) => {
 router.get('/images/:imageId/masks/:maskId', async (req, res) => {
 	const imageId = req.params.imageId
 	const maskId = req.params.maskId
-	const truePositive = req.query['true-positive'] !== undefined ? req.query['true-positive'] : 0
-	const falsePositive = req.query['false-positive'] !== undefined ? req.query['false-positive'] : 0
-	const falseNegative = req.query['false-negative'] !== undefined ? req.query['false-negative'] : 0
+	const truePositive = req.query['true-positive'] !== undefined ? req.query['true-positive'] : 1
+	const falsePositive = req.query['false-positive'] !== undefined ? req.query['false-positive'] : 1
+	const falseNegative = req.query['false-negative'] !== undefined ? req.query['false-negative'] : 1
 	const grayscale = req.query.grayscale !== undefined ? req.query.grayscale : 0
 
 	try {
