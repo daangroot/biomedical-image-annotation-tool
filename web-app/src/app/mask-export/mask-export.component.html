@@ -10,11 +10,39 @@
           <button type="button" class="btn btn-primary" (click)="exportAnnotationData()" *ngIf="!isLoading">Export JSON</button>
           <div class="spinner-border text-primary" role="status" *ngIf="isLoading"></div>
         </div>
-        <div class="mb-2">
-          <a class="btn btn-primary" href="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ maskId }}" download *ngIf="imageId">Export black/white image</a>
+
+        <hr>
+
+        <div class="container mb-2">
+          <div class="row">
+            <div class="col">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="includeTruePositives" checked (change)="updateImageUrl()">
+                <label class="form-check-label" for="includeTruePositives">Include true positives</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="includeFalsePositives" checked (change)="updateImageUrl()">
+                <label class="form-check-label" for="includeFalsePositives">Include false positives</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="includeFalseNegatives" checked (change)="updateImageUrl()">
+                <label class="form-check-label" for="includeFalseNegatives">Include false negatives</label>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="export-grayscale" id="export-black-white" checked (change)="updateImageUrl()">
+                <label class="form-check-label" for="export-black-white">Black and white</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="export-grayscale" id="export-grayscale" (change)="updateImageUrl()">
+                <label class="form-check-label" for="export-grayscale">Grayscale</label>
+              </div>
+            </div>
+          </div>
         </div>
         <div>
-          <a class="btn btn-primary" href="{{ environment.apiUrl }}/api/images/{{ imageId }}/masks/{{ maskId }}?grayscale=1" download *ngIf="imageId">Export grayscale image</a>
+          <a class="btn btn-primary" href="{{ imageUrl }}" download *ngIf="imageId">Export image</a>
         </div>
       </div>
     </div>

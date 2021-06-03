@@ -19,6 +19,8 @@ export class MaskExportComponent implements AfterViewInit {
   environment = environment;
   isLoading: boolean = false;
 
+  imageUrl: string = "";
+
   constructor(
     private maskApiService: MaskApiService,
     private fileSaveService: FileSaveService
@@ -33,6 +35,9 @@ export class MaskExportComponent implements AfterViewInit {
     this.imageId = imageId;
     this.maskId = maskMetadata.id;
     this.maskMetadata = maskMetadata;
+
+    this.updateImageUrl();
+
     this.modal.show();
   }
 
@@ -52,5 +57,21 @@ export class MaskExportComponent implements AfterViewInit {
     const originalName = this.maskMetadata.originalName;
     const filename = (originalName.substr(0, originalName.lastIndexOf('.')) || originalName) + '.json';
     this.fileSaveService.saveJson(json, filename);
+  }
+
+  updateImageUrl(): void {
+    const includeTruePositives = document.getElementById('includeTruePositives') as HTMLInputElement;
+    const includeFalsePositives = document.getElementById('includeFalsePositives') as HTMLInputElement;
+    const includeFalseNegatives = document.getElementById('includeFalseNegatives') as HTMLInputElement;
+    const grayscale = document.getElementById('export-grayscale') as HTMLInputElement;
+
+    const newUrl = new URL(`/api/images/${this.imageId}/masks/${this.maskId}`, environment.apiUrl);
+    newUrl.searchParams.append('true-positive', includeTruePositives.checked ? '1' : '0');
+    newUrl.searchParams.append('false-positive', includeFalsePositives.checked ? '1' : '0');
+    newUrl.searchParams.append('false-negative', includeFalseNegatives.checked ? '1' : '0');
+    newUrl.searchParams.append('grayscale', grayscale.checked ? '1' : '0');
+    this.imageUrl = newUrl.toString();
+
+    console.log(this.imageUrl);
   }
 }
