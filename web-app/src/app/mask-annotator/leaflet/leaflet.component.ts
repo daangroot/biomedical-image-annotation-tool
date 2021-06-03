@@ -392,7 +392,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       layer.getPopup()?.update();
       layer.pm.enable({
         allowSelfIntersection: false,
-        limitMarkersToCount: 256
+        limitMarkersToCount: 256,
+        removeLayerBelowMinVertexCount: false
       })
     };
 
