@@ -13,7 +13,7 @@ APP_FOLDER = '/usr/src/app'
 UPLOAD_FOLDER = APP_FOLDER + '/uploads'
 OUTPUT_FOLDER = APP_FOLDER + '/output'
 
-COLORS = { 0: 192, 1: 144, 2: 96 }
+COLORS = { 0: 255, 1: 160, 2: 64 }
 
 app = Flask(__name__)
 
