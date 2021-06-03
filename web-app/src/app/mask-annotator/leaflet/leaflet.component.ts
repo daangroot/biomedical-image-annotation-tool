@@ -614,6 +614,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const feature = this.features.get(fid)!;
     this.addToFeatureEditUndoStack([feature]);
     feature.geometry.coordinates = this.leafletService.layerToPoints(layer);
+    feature.properties.simplifyTolerance = 0;
     layer.setPopupContent(this.createFeaturePopup(fid));
   }
 
