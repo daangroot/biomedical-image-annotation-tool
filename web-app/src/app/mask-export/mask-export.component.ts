@@ -19,7 +19,7 @@ export class MaskExportComponent implements AfterViewInit {
   environment = environment;
   isLoading: boolean = false;
 
-  imageUrl: string = "";
+  imageUrl: string = '';
 
   constructor(
     private maskApiService: MaskApiService,
@@ -71,7 +71,5 @@ export class MaskExportComponent implements AfterViewInit {
     newUrl.searchParams.append('false-negative', includeFalseNegatives.checked ? '1' : '0');
     newUrl.searchParams.append('grayscale', grayscale.checked ? '1' : '0');
     this.imageUrl = newUrl.toString();
-
-    console.log(this.imageUrl);
   }
 }
