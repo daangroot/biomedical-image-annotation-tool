@@ -448,7 +448,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     truePositive.id = `segment-grade-${fid}-truepositive`;
     truePositive.checked = feature.properties.grade === FeatureGrade.TruePositive;
 
-    const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-primary', gradeButtons) as HTMLLabelElement;
+    const truePositiveLabel = L.DomUtil.create('label', 'btn btn-outline-success', gradeButtons) as HTMLLabelElement;
     truePositiveLabel.innerHTML = 'True Positive';
     truePositiveLabel.htmlFor = truePositive.id;
 
@@ -503,7 +503,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     switch (feature.properties.grade) {
       case FeatureGrade.FalsePositive: return { color: 'red' };
       case FeatureGrade.FalseNegative: return { color: 'orange' };
-      default: return {};
+      default: return { color: 'limegreen' };
     }
   }
 
