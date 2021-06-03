@@ -15,7 +15,6 @@ export class StatisticsComponent implements AfterViewInit {
   truePositiveCount: number = 0;
   falsePositiveCount: number = 0;
   falseNegativeCount: number = 0;
-  unspecifiedCount: number = 0;
   totalCount: number = 0;
 
   constructor() { }
@@ -34,7 +33,6 @@ export class StatisticsComponent implements AfterViewInit {
     this.truePositiveCount = 0;
     this.falsePositiveCount = 0;
     this.falseNegativeCount = 0;
-    this.unspecifiedCount = 0;
     this.totalCount = features.size;
 
     if (this.totalCount === 0) {
@@ -46,7 +44,6 @@ export class StatisticsComponent implements AfterViewInit {
         case FeatureGrade.TruePositive: this.truePositiveCount++; break;
         case FeatureGrade.FalsePositive: this.falsePositiveCount++; break;
         case FeatureGrade.FalseNegative: this.falseNegativeCount++; break;
-        default: this.unspecifiedCount++; break;
       }
     }
   }

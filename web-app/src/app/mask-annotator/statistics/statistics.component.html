@@ -14,24 +14,19 @@
       </thead>
       <tbody>
         <tr>
-          <td style="color: green">True positive</td>
+          <td><span style="color: green">True positive</span></td>
           <td>{{ truePositiveCount }}</td>
           <td>{{ countPercentage(truePositiveCount) | number:'1.0-2' }}%</td>
         </tr>
         <tr>
-          <td style="color: red">False positive</td>
+          <td><span style="color: red">False positive</span></td>
           <td>{{ falsePositiveCount }}</td>
           <td>{{ countPercentage(falsePositiveCount) | number:'1.0-2' }}%</td>
         </tr>
         <tr>
-          <td style="color: orange">False negative</td>
+          <td><span style="color: orange">False negative</span></td>
           <td>{{ falseNegativeCount }}</td>
           <td>{{ countPercentage(falseNegativeCount) | number:'1.0-2' }}%</td>
-        </tr>
-        <tr>
-          <td>Unspecified</td>
-          <td>{{ unspecifiedCount }}</td>
-          <td>{{ countPercentage(unspecifiedCount) | number:'1.0-2' }}%</td>
         </tr>
       </tbody>
       <tfoot>
