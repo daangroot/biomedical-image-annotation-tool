@@ -497,7 +497,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     if (this.selectedFids.has(feature.properties.fid)) {
-      return { color: 'yellow' };
+      return { color: '#3388ff' };
     }
 
     switch (feature.properties.grade) {
