@@ -1,4 +1,5 @@
 import json
+import numpy
 import uuid
 
 from io import BytesIO
@@ -63,10 +64,13 @@ def polygonize():
 
 
 def features_to_shapes(features, grayscale, true_positive, false_positive, false_negative):
+    shapes = []
     for feature in features:
         grade = feature['properties']['grade']
         if (grade == 0 and true_positive) or (grade == 1 and false_positive) or (grade == 2 and false_negative):
-            yield (feature['geometry'], COLORS[grade] if grayscale else 255)
+            shapes.append((feature['geometry'], COLORS[grade] if grayscale else 255))
+
+    return shapes
 
 
 @app.route('/rasterize', methods=['POST'])
@@ -82,7 +86,10 @@ def rasterize():
     false_negative = int(request.args.get('false-negative', '1'))
 
     shapes = features_to_shapes(features, grayscale, true_positive, false_positive, false_negative)
-    raster = rasterio.features.rasterize(shapes, out_shape=(height, width))
+    if len(shapes) > 0:
+        raster = rasterio.features.rasterize(shapes, out_shape=(height, width))
+    else:
+        raster = numpy.zeros((height, width), numpy.uint8)
     img = Image.fromarray(raster)
     img_stream = BytesIO()
     img.save(img_stream, format='TIFF', compression='packbits')
