@@ -1,13 +1,13 @@
 version: "3.9"
 services:
-  web-app:
-    build: ./web-app
+  gateway-server:
+    build: ./gateway-server
     ports:
       - "80:80"
+  web-app:
+    build: ./web-app
   image-server:
     build: ./image-server
-    ports:
-      - "8080:8080"
     environment:
       - GDAL_SERVER_URL=http://gdal-server:5000
     volumes:
