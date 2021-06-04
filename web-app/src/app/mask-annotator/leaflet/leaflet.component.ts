@@ -170,7 +170,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
     this.maskMap.on('pm:create', result => {
       this.createFeature(result.layer);
-      this.toggleDrawMode(false);
+      this.drawnVertexCount = 0;
+      this.removeLastVertexButton.hidden = true;
     });
 
     this.maskMap.on('pm:globalcutmodetoggled', (result: any) => {
@@ -333,6 +334,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       this.maskMap.pm.enableDraw('Polygon', {
         // @ts-ignore
         allowSelfIntersection: false,
+        continueDrawing: true,
         tooltips: false
       });
     } else {
