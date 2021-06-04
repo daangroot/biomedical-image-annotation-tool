@@ -2,6 +2,7 @@ import { Input, Component, OnInit, AfterViewInit, ViewChild, HostListener } from
 import * as L from 'leaflet';
 import 'leaflet.sync';
 import '@geoman-io/leaflet-geoman-free';
+import FreeDraw from 'leaflet-freedraw';
 import { Feature, Polygon, MultiPolygon } from 'geojson';
 import { environment } from '../../../environments/environment';
 import { FeatureGrade } from '../../types/feature-grade.type';
@@ -11,7 +12,6 @@ import { ImageMetadata } from '../../types/image-metadata.type';
 import { MaskApiService } from '../../services/mask-api.service';
 import { AnnotationData } from '../../types/annotation-data.type';
 import { StatisticsComponent } from '../statistics/statistics.component';
-import { feature } from '@turf/turf';
 
 @Component({
   selector: 'app-leaflet',
@@ -35,9 +35,11 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   private neMax!: L.PointTuple;
   private maxNativeZoom!: number;
   private featuresLayer!: L.GeoJSON;
+  private freeDrawLayer!: FreeDraw;
 
   private toggleTopLeftControlsButton!: HTMLElement;
   private drawFeatureButton!: HTMLElement;
+  private freeDrawFeatureButton!: HTMLElement;
   private removeLastVertexButton!: HTMLElement;
   private cutFeatureButton!: HTMLElement;
   private multiSelectButton!: HTMLElement;
@@ -55,6 +57,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
 
   private showTopLeftControls: boolean = true;
   private drawModeEnabled: boolean = false;
+  private freeDrawModeEnabled: boolean = false;
   private cutModeEnabled: boolean = false;
   private multiSelectModeEnabled: boolean = false;
   private drawnVertexCount: number = 0;
@@ -154,6 +157,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
       snapIgnore: true
     }).addTo(this.maskMap);
 
+    this.freeDrawLayer = new FreeDraw({
+      mode: FreeDraw.NONE
+    }).addTo(this.maskMap);
+    
     this.maskMap.on('pm:drawstart', ({ workingLayer }: any) =>
       workingLayer.on('pm:vertexadded', (e: any) =>
         this.onVertexDrawn()
@@ -174,6 +181,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.maskMap.on('pm:cut', (result: any) => {
       this.cutFeature(result.layer.feature, result.originalLayer.feature);
       this.toggleCutMode(false);
+    });
+
+    this.freeDrawLayer.on('markers', (event: any) => {
+      if (event.eventType === 'create') {
+        this.createFreehandFeature(event.latLngs);
+      }
     });
 
     this.initMaskMapControls();
@@ -209,6 +222,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeLastVertexButton = this.leafletService.createButtonElement('Remove last vertex', 'undo', () => this.removeLastVertex());
     this.removeLastVertexButton.style.backgroundColor = '#3388ff';
     this.removeLastVertexButton.hidden = true;
+    this.freeDrawFeatureButton = this.leafletService.createButtonElement('Draw segment freehand', 'free_draw', () => this.toggleFreeDrawMode());
     this.cutFeatureButton = this.leafletService.createButtonElement('Cut segment', 'cut', () => this.toggleCutMode());
 
     const simplifyAllFeaturesButton = this.leafletService.createButtonElement('Simplify all segments', 'simplify', () =>
@@ -253,6 +267,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     const editButtons = [
       this.drawFeatureButton,
       this.removeLastVertexButton,
+      this.freeDrawFeatureButton,
       this.cutFeatureButton,
       simplifyAllFeaturesButton,
       removeAllHolesButton,
@@ -299,10 +314,15 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private toggleDrawMode(force?: boolean | undefined): void {
+  private toggleDrawMode(force?: boolean): void {
     this.drawModeEnabled = force !== undefined ? force : !this.drawModeEnabled;
-    if (this.drawModeEnabled && this.cutModeEnabled) {
-      this.toggleCutMode(false);
+    if (this.drawModeEnabled) {
+      if (this.freeDrawModeEnabled) {
+        this.toggleFreeDrawMode(false);
+      }
+      if (this.cutModeEnabled) {
+        this.toggleCutMode(false);
+      }
     }
 
     this.drawFeatureButton.title = this.drawModeEnabled ? 'Cancel segment drawing' : 'Draw segment';
@@ -326,10 +346,36 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private toggleCutMode(force?: boolean | undefined): void {
+  private toggleFreeDrawMode(force?: boolean) {
+    this.freeDrawModeEnabled = force !== undefined ? force : !this.freeDrawModeEnabled;
+    if (this.freeDrawModeEnabled) {
+      if (this.drawModeEnabled) {
+        this.toggleDrawMode(false);
+      }
+      if (this.cutModeEnabled) {
+        this.toggleCutMode(false);
+      }
+    }
+
+    this.freeDrawFeatureButton.title = this.freeDrawModeEnabled ? 'Cancel segment drawing freehand' : 'Draw segment freehand';
+    this.freeDrawFeatureButton.classList.toggle('active', this.freeDrawModeEnabled);
+
+    if (this.freeDrawModeEnabled) {
+      this.freeDrawLayer.mode(FreeDraw.CREATE);
+    } else {
+      this.freeDrawLayer.mode(FreeDraw.NONE);
+    }
+  }
+
+  private toggleCutMode(force?: boolean): void {
     this.cutModeEnabled = force !== undefined ? force : !this.cutModeEnabled;
-    if (this.cutModeEnabled && this.drawModeEnabled) {
-      this.toggleDrawMode(false);
+    if (this.cutModeEnabled) {
+      if (this.drawModeEnabled) {
+        this.toggleDrawMode(false);
+      }
+      if (this.freeDrawModeEnabled) {
+        this.toggleFreeDrawMode(false);
+      }
     }
 
     this.cutFeatureButton.title = this.cutModeEnabled ? 'Cancel segment cutting' : 'Cut segment';
@@ -350,7 +396,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private toggleMultiSelectMode(force?: boolean | undefined): void {
+  private toggleMultiSelectMode(force?: boolean): void {
     this.multiSelectModeEnabled = force !== undefined ? force : !this.multiSelectModeEnabled;
 
     this.multiSelectButton.title = this.multiSelectModeEnabled ? 'Cancel selecting segments' : 'Select segments';
@@ -586,6 +632,17 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     layer.remove();
 
     const feature = this.leafletService.layerToFeature(layer);
+    this.featuresLayer.addData(feature);
+
+    const prevFeature = JSON.parse(JSON.stringify(feature));
+    prevFeature.geometry = null;
+    this.addToFeatureEditUndoStack([prevFeature]);
+  }
+
+  private createFreehandFeature(latLngs: L.LatLng[][]): void {
+    this.freeDrawLayer.clear();
+    const points = this.leafletService.polygonToPoints(latLngs);
+    const feature = this.leafletService.createFeature(points);
     this.featuresLayer.addData(feature);
 
     const prevFeature = JSON.parse(JSON.stringify(feature));
