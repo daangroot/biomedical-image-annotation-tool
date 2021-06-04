@@ -158,9 +158,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }).addTo(this.maskMap);
 
     this.freeDrawLayer = new FreeDraw({
-      mode: FreeDraw.NONE
+      mode: FreeDraw.NONE,
+      strokeWidth: 3
     }).addTo(this.maskMap);
-    
+
     this.maskMap.on('pm:drawstart', ({ workingLayer }: any) =>
       workingLayer.on('pm:vertexadded', (e: any) =>
         this.onVertexDrawn()

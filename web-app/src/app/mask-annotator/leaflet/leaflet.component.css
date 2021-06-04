@@ -26,3 +26,7 @@
 :host::ng-deep .leaflet-control a.active {
   background-color: #3388ff;
 }
+
+:host::ng-deep path.leaflet-line {
+  stroke: #3388ff;
+}
