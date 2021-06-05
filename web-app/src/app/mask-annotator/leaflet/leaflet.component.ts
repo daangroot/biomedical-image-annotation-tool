@@ -90,11 +90,12 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.features = new Map();
     this.featureLayers = new Map();
     this.featuresLayer.clearLayers();
+    this.setUnsavedChanges(false);
+    this.featureEditUndoStack = [];
+    this.featureEditUndoControl.remove();
 
     this.maskApiService.fetchAnnotationData(this.imageId, this.maskId).subscribe(
-      annotationData => {
-        this.featuresLayer.addData(annotationData.features as any);
-      },
+      annotationData => this.featuresLayer.addData(annotationData.features as any),
       error => window.alert('Failed to retrieve annotation data from server!')
     )
   }
@@ -849,10 +850,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     }
 
     this.maskApiService.resetAnnotationData(this.imageId, this.maskId).subscribe(
-      next => {
-        this.updateAnnotationData();
-        this.setUnsavedChanges(false);
-      },
+      next => this.updateAnnotationData(),
       error => window.alert('Failed to reset segments and grades!')
     )
   }
