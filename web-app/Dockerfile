@@ -3,8 +3,8 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 COPY . .
-ARG dev
-RUN if [[ -z "dev" ]] ; then echo npm run build --prod ; else npm run build ; fi
+ARG dev=false
+RUN if [[ "$dev" = "false" ]] ; then npm run build -- --prod ; else npm run build ; fi
 
 FROM nginx:1.20.1-alpine
 COPY nginx.conf /etc/nginx/
