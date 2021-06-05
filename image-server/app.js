@@ -9,7 +9,7 @@ const port = 8080
 global.__rootdir = __dirname
 
 app.use(express.json({
-  limit: '100mb'
+  limit: '1gb'
 }))
 app.use(cors())
 app.use('/api', bioImageRouter)
