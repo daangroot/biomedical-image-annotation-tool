@@ -643,6 +643,10 @@ export class LeafletComponent implements OnInit, AfterViewInit {
   }
 
   private createFreehandFeature(latLngs: L.LatLng[][]): void {
+    if (latLngs.length === 0) {
+      return;
+    }
+
     this.freeDrawLayer.clear();
     const points = this.leafletService.polygonToPoints(latLngs);
     const feature = this.leafletService.createFeature(points);
