@@ -261,7 +261,7 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.removeHolesInSelectedFeaturesButton.style.backgroundColor = '#3388ff';
     this.removeHolesInSelectedFeaturesButton.hidden = true;
 
-    this.removeSelectedFeaturesButton = this.leafletService.createButtonElement('Remove selected features', 'delete', () => 
+    this.removeSelectedFeaturesButton = this.leafletService.createButtonElement('Remove selected segments', 'delete', () => 
       this.removeFeatures(this.getSelectedFeatures(), true)
     );
     this.removeSelectedFeaturesButton.style.backgroundColor = '#3388ff';
