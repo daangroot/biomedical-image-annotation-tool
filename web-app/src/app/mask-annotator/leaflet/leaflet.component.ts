@@ -331,6 +331,9 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     this.drawFeatureButton.title = this.drawModeEnabled ? 'Cancel segment drawing' : 'Draw segment';
     this.drawFeatureButton.classList.toggle('active', this.drawModeEnabled);
 
+    this.drawnVertexCount = 0;
+    this.removeLastVertexButton.hidden = true;
+
     if (this.drawModeEnabled) {
       this.maskMap.pm.enableDraw('Polygon', {
         // @ts-ignore
@@ -341,8 +344,6 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     } else {
       // @ts-ignore
       this.maskMap.pm.disableDraw();
-      this.drawnVertexCount = 0;
-      this.removeLastVertexButton.hidden = true;
       // Reset on click listener, because for some reason Geoman changes it.
       this.features.forEach((_feature, fid) =>
         this.setOnFeatureClickListener(fid)
@@ -673,8 +674,8 @@ export class LeafletComponent implements OnInit, AfterViewInit {
     // @ts-ignore
     this.maskMap.pm.Draw.Polygon._removeLastVertex();
     this.drawnVertexCount--;
-    if (this.drawnVertexCount == 0) {
-      this.toggleDrawMode(false);
+    if (this.drawnVertexCount === 0) {
+      this.toggleDrawMode(true);
     }
   }
 
